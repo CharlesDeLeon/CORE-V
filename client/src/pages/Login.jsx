@@ -13,7 +13,6 @@ const Login = () => {
     e.preventDefault()
     setError('')
     setLoading(true)
-
     try {
       await login(email, password, role)
     } catch (err) {
@@ -25,188 +24,209 @@ const Login = () => {
 
   return (
     <div style={styles.page}>
-      <div style={styles.card}>
 
-        <div style={styles.logo}>
-          <div style={styles.logoIcon}>
-            <svg width="18" height="18" fill="white" viewBox="0 0 24 24">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
+      {/* diagonal split background */}
+      <div style={styles.yellowSide} />
+      <div style={styles.blueSide} />
+
+      {/* welcome text — left side */}
+      <div style={styles.welcomeWrapper}>
+        <h1 style={styles.welcomeText}>Welcome,<br />Scholar!</h1>
+      </div>
+
+      {/* glass card — right side */}
+      <div style={styles.cardWrapper}>
+        <div style={styles.card}>
+
+          <div style={styles.roleGroup}>
+            <button
+              type="button"
+              style={{ ...styles.roleBtn, ...(role === 'Student' ? styles.roleBtnActive : {}) }}
+              onClick={() => setRole('Student')}
+            >
+              Student
+            </button>
+            <button
+              type="button"
+              style={{ ...styles.roleBtn, ...(role === 'Admin' ? styles.roleBtnActive : {}) }}
+              onClick={() => setRole('Admin')}
+            >
+              Admin
+            </button>
           </div>
-          <div>
-            <div style={styles.logoText}>CORE V</div>
-            <div style={styles.logoSub}>Research Paper Submission System</div>
-          </div>
-        </div>
 
-        <h2 style={styles.heading}>Sign in</h2>
-        <p style={styles.subtitle}>Choose your role to continue</p>
-
-        <div style={styles.roleGroup}>
-          <button
-            style={{ ...styles.roleBtn, ...(role === 'Student' ? styles.roleBtnActive : {}) }}
-            onClick={() => setRole('Student')}
-            type="button"
-          >
-            Student
-          </button>
-          <button
-            style={{ ...styles.roleBtn, ...(role === 'Admin' ? styles.roleBtnActive : {}) }}
-            onClick={() => setRole('Admin')}
-            type="button"
-          >
-            Admin
-          </button>
-        </div>
-
-        <form onSubmit={handleLogin}>
-          <div style={styles.field}>
-            <label style={styles.label}>Email address</label>
+          <form onSubmit={handleLogin} style={styles.form}>
             <input
               type="email"
+              placeholder="User"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@school.edu.ph"
               style={styles.input}
               required
             />
-          </div>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Password</label>
             <input
               type="password"
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
               style={styles.input}
               required
             />
-          </div>
 
-          {error && <div style={styles.error}>{error}</div>}
+            {error && <div style={styles.error}>{error}</div>}
 
-          <button type="submit" style={styles.submitBtn} disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign in'}
-          </button>
-        </form>
+            <div style={styles.btnRow}>
+              <button type="submit" style={styles.loginBtn} disabled={loading}>
+                {loading ? 'Logging in...' : 'Login'}
+              </button>
+            </div>
+          </form>
 
+        </div>
       </div>
+
     </div>
   )
 }
 
 const styles = {
   page: {
-    minHeight: '100vh',
+    position: 'relative',
+    width: '100vw',
+    height: '100vh',
+    overflow: 'hidden',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f5f5f5',
-    padding: '1rem',
+    fontFamily: 'sans-serif',
   },
-  card: {
-    background: 'white',
-    border: '1px solid #e5e5e5',
-    borderRadius: '12px',
-    padding: '2rem 2.25rem',
+
+  // diagonal split — yellow triangle (top-left)
+  yellowSide: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
     width: '100%',
-    maxWidth: '400px',
+    height: '100%',
+    background: '#FFBE4F',
+    clipPath: 'polygon(0 0, 58% 0, 38% 100%, 0 100%)',
+    zIndex: 0,
   },
-  logo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    marginBottom: '1.75rem',
+
+  // blue side fills the rest
+  blueSide: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    background: 'linear-gradient(135deg, #3B4BC8 0%, #2C3A9E 100%)',
+    zIndex: -1,
   },
-  logoIcon: {
-    width: '36px',
-    height: '36px',
-    background: '#534AB7',
-    borderRadius: '8px',
+
+  welcomeWrapper: {
+    position: 'relative',
+    zIndex: 1,
+    flex: 1,
+    paddingLeft: '5%',
+  },
+
+  welcomeText: {
+    fontSize: 'clamp(2rem, 4vw, 3.5rem)',
+    fontWeight: '800',
+    color: 'white',
+    lineHeight: 1.2,
+    textShadow: '0 2px 8px rgba(0,0,0,0.1)',
+  },
+
+  cardWrapper: {
+    position: 'relative',
+    zIndex: 1,
+    width: '38%',
     display: 'flex',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: '4%',
   },
-  logoText: {
-    fontSize: '18px',
-    fontWeight: '500',
+
+  // glassmorphism card
+  card: {
+    width: '100%',
+    maxWidth: '360px',
+    background: 'rgba(255, 255, 255, 0.12)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    border: '1px solid rgba(255, 255, 255, 0.25)',
+    borderRadius: '20px',
+    padding: '2.5rem 2rem',
   },
-  logoSub: {
-    fontSize: '12px',
-    color: '#888',
-    marginTop: '1px',
-  },
-  heading: {
-    fontSize: '18px',
-    fontWeight: '500',
-    marginBottom: '.25rem',
-  },
-  subtitle: {
-    fontSize: '14px',
-    color: '#888',
-    marginBottom: '1.25rem',
-  },
+
   roleGroup: {
     display: 'flex',
     gap: '8px',
-    marginBottom: '1.25rem',
+    marginBottom: '1.5rem',
   },
+
   roleBtn: {
     flex: 1,
     padding: '8px 0',
     fontSize: '13px',
-    border: '1px solid #e5e5e5',
+    border: '1px solid rgba(255,255,255,0.3)',
     borderRadius: '8px',
-    background: 'white',
+    background: 'transparent',
+    color: 'rgba(255,255,255,0.7)',
     cursor: 'pointer',
-    color: '#888',
+    transition: 'all 0.2s',
   },
+
   roleBtnActive: {
-    background: '#EEEDFE',
-    borderColor: '#534AB7',
-    color: '#3C3489',
-    fontWeight: '500',
+    background: 'rgba(255,255,255,0.2)',
+    color: 'white',
+    fontWeight: '600',
+    border: '1px solid rgba(255,255,255,0.6)',
   },
-  field: {
-    marginBottom: '1rem',
+
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
   },
-  label: {
-    display: 'block',
-    fontSize: '13px',
-    color: '#666',
-    marginBottom: '6px',
-  },
+
   input: {
     width: '100%',
-    padding: '0 12px',
-    height: '38px',
+    padding: '14px 16px',
     fontSize: '14px',
-    border: '1px solid #e5e5e5',
-    borderRadius: '8px',
+    border: 'none',
+    borderRadius: '10px',
+    background: 'rgba(220, 220, 220, 0.75)',
+    color: '#333',
     outline: 'none',
     boxSizing: 'border-box',
   },
+
   error: {
     fontSize: '13px',
-    color: '#c0392b',
-    background: '#fdf0ed',
-    border: '1px solid #f5c6c0',
+    color: '#ffe0e0',
+    background: 'rgba(255,80,80,0.2)',
+    border: '1px solid rgba(255,80,80,0.3)',
     borderRadius: '8px',
     padding: '8px 12px',
-    marginBottom: '1rem',
   },
-  submitBtn: {
-    width: '100%',
-    height: '38px',
-    background: '#534AB7',
+
+  btnRow: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    marginTop: '0.5rem',
+  },
+
+  loginBtn: {
+    padding: '12px 32px',
+    fontSize: '14px',
+    fontWeight: '600',
+    background: '#FFBE4F',
     color: 'white',
     border: 'none',
-    borderRadius: '8px',
-    fontSize: '14px',
-    fontWeight: '500',
+    borderRadius: '10px',
     cursor: 'pointer',
-    marginTop: '.25rem',
   },
 }
 
