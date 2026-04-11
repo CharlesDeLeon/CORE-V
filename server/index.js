@@ -12,9 +12,9 @@ app.use(express.urlencoded({ extended: true}))
 
 //ROutes
 
-app.use('/api/auth', require('.routes/auth.routes'))
-app.use('/api/papers', require('.routes/paper.routes'))
-app.use('/api/reviews', require('.routes/review.routes'))
+app.use('/api/auth', require('./routes/auth.routes'))
+app.use('/api/papers', require('./routes/paper.routes'))
+app.use('/api/reviews', require('./routes/review.routes'))
 
 app.get('/api', (req, res ) => {
     res.json({ message: 'CORE V API is running' })
