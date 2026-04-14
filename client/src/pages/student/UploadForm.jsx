@@ -1,6 +1,18 @@
 import { useState } from "react";
 import axios from "axios";
 
+function SelectProgram() {
+  const [choice, setChoice] = useState("");
+
+  return (
+    <select value={choice} onChange={(e) => setChoice(e.target.value)}>
+      <option value="BSIT">BSIT</option>
+      <option value="BSEMC">BSEMC</option>
+      <option value="BSCS">BSCS</option>
+    </select>
+  );
+}
+
 export default function UploadForm() {
   const [form, setForm] = useState({
     title: "",
@@ -111,15 +123,8 @@ export default function UploadForm() {
         </div>
 
         <div>
-          <input
-            type="text"
-            name="program"
-            placeholder="Academic Program"
-            value={form.program}
-            onChange={handleChange}
-            required
-          />
-        </div>
+          <SelectProgram />
+        </div> 
 
         <div>
           <input
