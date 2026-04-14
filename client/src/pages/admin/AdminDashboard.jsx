@@ -1,4 +1,4 @@
-import useAuth from '../context/useAuth'
+import useAuth from '../../context/useAuth'
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth()

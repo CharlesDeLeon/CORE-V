@@ -25,16 +25,13 @@ const Login = () => {
   return (
     <div style={styles.page}>
 
-      {/* diagonal split background */}
       <div style={styles.yellowSide} />
       <div style={styles.blueSide} />
 
-      {/* welcome text — left side */}
       <div style={styles.welcomeWrapper}>
         <h1 style={styles.welcomeText}>Welcome,<br />Scholar!</h1>
       </div>
 
-      {/* glass card — right side */}
       <div style={styles.cardWrapper}>
         <div style={styles.card}>
 
@@ -100,7 +97,6 @@ const styles = {
     fontFamily: 'sans-serif',
   },
 
-  // diagonal split — yellow triangle (top-left)
   yellowSide: {
     position: 'absolute',
     top: 0,
@@ -112,7 +108,6 @@ const styles = {
     zIndex: 0,
   },
 
-  // blue side fills the rest
   blueSide: {
     position: 'absolute',
     top: 0,
@@ -148,7 +143,6 @@ const styles = {
     marginRight: '4%',
   },
 
-  // glassmorphism card
   card: {
     width: '100%',
     maxWidth: '360px',
