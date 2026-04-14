@@ -10,6 +10,14 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE student_profiles (
+    user_id INT PRIMARY KEY,
+    year_level INT NOT NULL,
+    block_id VARCHAR(10) NOT NULL,
+    program VARCHAR(100) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
 CREATE TABLE research_papers (
     paper_id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -19,7 +27,9 @@ CREATE TABLE research_papers (
     status ENUM('Ongoing', 'Needs Revision', 'Approved') DEFAULT 'Ongoing',
     user_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    adviser_id INT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id)
+    FOREIGN KEY (adviser_id) REFERENCES users(user_id)
 );
 
 CREATE TABLE versions (
