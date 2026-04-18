@@ -1,11 +1,12 @@
 import { useState } from "react";
 import axios from "axios";
 
-function SelectProgram() {
-  const [choice, setChoice] = useState("");
-
+function SelectProgram({ value, onChange }) {
   return (
-    <select value={choice} onChange={(e) => setChoice(e.target.value)}>
+    <select name="program" value={value} onChange={onChange} required>
+      <option value="" disabled>
+        Select program
+      </option>
       <option value="BSIT">BSIT</option>
       <option value="BSEMC">BSEMC</option>
       <option value="BSCS">BSCS</option>
@@ -67,7 +68,7 @@ export default function UploadForm() {
       formData.append("file", file);
 
       const res = await axios.post(
-        "http://localhost:5000/papers/upload",
+        "http://localhost:5000/api/papers/upload",
         formData,
         {
           headers: {
@@ -123,7 +124,7 @@ export default function UploadForm() {
         </div>
 
         <div>
-          <SelectProgram />
+          <SelectProgram value={form.program} onChange={handleChange} />
         </div> 
 
         <div>

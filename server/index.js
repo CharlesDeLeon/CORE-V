@@ -14,8 +14,6 @@ app.use(cors({origin: 'http://localhost:5173'}))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true}))
 
-//ROutes
-
 app.use('/api/auth', require('./routes/auth.routes'))
 app.use('/api/papers', require('./routes/paper.routes'))
 app.use('/api/reviews', require('./routes/review.routes'))
