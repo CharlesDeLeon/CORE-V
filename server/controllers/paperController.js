@@ -22,7 +22,7 @@ const uploadPaper = async (req, res) => {
 
     let paperId
     if (existingPaper.length > 0) {
-      paperId = existingPaper[0].paper_id
+      paperId = existingPaper[0].paper_id 
     } else {
       const [paperResult] = await connection.query(
         `INSERT INTO research_papers (user_id, title, authors, program, year, adviser_id) 
@@ -39,7 +39,7 @@ const uploadPaper = async (req, res) => {
     const nextVersion = Number(versionRows[0].latestVersion) + 1
 
     await connection.query(
-      `INSERT INTO versions (paper_id, file_path, version_number, uploader_id) 
+      `INSERT INTO versions (paper_id, file_path, version_number, uploader_id)
        VALUES (?, ?, ?, ?)`,
       [paperId, req.file.path, nextVersion, userId]
     )

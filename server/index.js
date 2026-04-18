@@ -15,6 +15,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true}))
 
 app.use('/api/auth', require('./routes/auth.routes'))
+app.use('/api/advisers', require('./routes/adviser.routes'))
 app.use('/api/papers', require('./routes/paper.routes'))
 app.use('/api/reviews', require('./routes/review.routes'))
 

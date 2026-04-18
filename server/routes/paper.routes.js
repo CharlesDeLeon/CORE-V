@@ -41,11 +41,11 @@ const upload = multer({
 })
 
 router.get('/', (req, res) => res.json({ message: 'paper routes ready' }))
-router.get('/my', authMiddleware, roleMiddleware('student'), getMyPapers)
+router.get('/my', authMiddleware, roleMiddleware('Student'), getMyPapers)
 router.post(
   '/upload',
   authMiddleware,
-  roleMiddleware('student'),
+  roleMiddleware('Student'),
   upload.single('file'),
   uploadPaper
 )

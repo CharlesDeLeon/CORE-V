@@ -28,7 +28,7 @@ CREATE TABLE research_papers (
     user_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     adviser_id INT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (adviser_id) REFERENCES users(user_id)
 );
 
