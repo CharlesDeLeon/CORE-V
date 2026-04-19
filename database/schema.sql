@@ -19,17 +19,15 @@ CREATE TABLE student_profiles (
 );
 
 CREATE TABLE research_papers (
-    paper_id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    authors VARCHAR(255) NOT NULL,
-    program VARCHAR(100) NOT NULL,
-    year YEAR NOT NULL,
-    status ENUM('Ongoing', 'Needs Revision', 'Approved') DEFAULT 'Ongoing',
-    user_id INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    adviser_id INT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (adviser_id) REFERENCES users(user_id)
+  paper_id INT NOT NULL AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  authors TEXT NOT NULL,
+  program VARCHAR(100) NOT NULL,
+  year INT NOT NULL,
+  adviser_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (paper_id)
 );
 
 CREATE TABLE versions (
