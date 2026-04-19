@@ -33,12 +33,16 @@ CREATE TABLE research_papers (
 );
 
 CREATE TABLE versions (
-    version_id INT AUTO_INCREMENT PRIMARY KEY,
-    version_number INT NOT NULL,
-    submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    file_path VARCHAR(255) NOT NULL,
-    paper_id INT NOT NULL,
-    FOREIGN KEY (paper_id) REFERENCES research_papers(paper_id)
+  version_id INT NOT NULL AUTO_INCREMENT,
+  paper_id INT NOT NULL,
+  file_path VARCHAR(255) NOT NULL,
+  version_number INT NOT NULL,
+  uploader_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (version_id),
+  CONSTRAINT fk_paper_versions 
+    FOREIGN KEY (paper_id) REFERENCES research_papers(paper_id) 
+    ON DELETE CASCADE
 );
 
 CREATE TABLE reviews (
