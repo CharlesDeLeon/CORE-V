@@ -1,19 +1,14 @@
-﻿# dependencies
-node_modules/
+﻿node_modules/
 client/node_modules/
 server/node_modules/
 
-# environment variables (NEVER commit these)
 .env
 server/.env
 
-# upload folder
 server/uploads/*
 !server/uploads/.gitkeep
 
-# build output
 client/dist/
 
-# OS files
 .DS_store
 Thumbs.db
