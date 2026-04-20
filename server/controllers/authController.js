@@ -3,17 +3,14 @@ const bcrypt = require('bcryptjs')
 const jwt =  require('jsonwebtoken')
 
 const login = async (req, res) => {
-    const { email, password, role } = req.body
+    const { email, password } = req.body
 
-    if (!email || !password || !role) {
+    if (!email || !password) {
         return res.status(400).json({ message: 'All fields are required' })
     }
 
     try {
-        const [rows] = await pool.query(
-            'SELECT * FROM users WHERE email = ? AND role = ?',
-            [email, role]
-        )
+        const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email])
 
         if (rows.length === 0) {
             return res.status(401).json({ message: 'Invalid Credentials' })

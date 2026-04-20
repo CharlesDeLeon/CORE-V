@@ -11,17 +11,19 @@ export const AuthProvider = ({ children }) => {
   )
   const navigate = useNavigate()
 
-  const login = async (email, password, role) => {
-    const data = await loginService(email, password, role)
+  const login = async (email, password) => {
+    const data = await loginService(email, password)
     localStorage.setItem('token', data.token)
     localStorage.setItem('user', JSON.stringify(data.user))
     setUser(data.user)
 
-    if (data.user.role === 'Student') {
-      navigate('/student')
-    } else {
-      navigate('/admin')
-    }
+    const role = data.user?.role?.toLowerCase()
+
+    if (role === 'student') navigate('/student')
+    else if (role === 'faculty') navigate('/faculty/dashboard')
+    else if (role === 'coordinator') navigate('/coordinator/dashboard')
+    else if (role === 'sysadmin' || role === 'admin') navigate('/admin')
+    else navigate('/login')
   }
 
   const logout = () => {

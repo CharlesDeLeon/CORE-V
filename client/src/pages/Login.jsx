@@ -3,7 +3,6 @@ import useAuth from '../context/useAuth'
 
 const Login = () => {
   const { login } = useAuth()
-  const [role, setRole] = useState('Student')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -14,7 +13,7 @@ const Login = () => {
     setError('')
     setLoading(true)
     try {
-      await login(email, password, role)
+      await login(email, password)
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.')
     } finally {
@@ -35,27 +34,12 @@ const Login = () => {
       <div style={styles.cardWrapper}>
         <div style={styles.card}>
 
-          <div style={styles.roleGroup}>
-            <button
-              type="button"
-              style={{ ...styles.roleBtn, ...(role === 'Student' ? styles.roleBtnActive : {}) }}
-              onClick={() => setRole('Student')}
-            >
-              Student
-            </button>
-            <button
-              type="button"
-              style={{ ...styles.roleBtn, ...(role === 'Admin' ? styles.roleBtnActive : {}) }}
-              onClick={() => setRole('Admin')}
-            >
-              Admin
-            </button>
-          </div>
+          <p style={styles.cardLabel}>Sign in to CORE-V</p>
 
           <form onSubmit={handleLogin} style={styles.form}>
             <input
               type="email"
-              placeholder="User"
+              placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={styles.input}
@@ -154,29 +138,12 @@ const styles = {
     padding: '2.5rem 2rem',
   },
 
-  roleGroup: {
-    display: 'flex',
-    gap: '8px',
-    marginBottom: '1.5rem',
-  },
-
-  roleBtn: {
-    flex: 1,
-    padding: '8px 0',
+  cardLabel: {
+    color: 'rgba(255,255,255,0.75)',
     fontSize: '13px',
-    border: '1px solid rgba(255,255,255,0.3)',
-    borderRadius: '8px',
-    background: 'transparent',
-    color: 'rgba(255,255,255,0.7)',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  },
-
-  roleBtnActive: {
-    background: 'rgba(255,255,255,0.2)',
-    color: 'white',
-    fontWeight: '600',
-    border: '1px solid rgba(255,255,255,0.6)',
+    marginBottom: '1.5rem',
+    marginTop: 0,
+    letterSpacing: '0.03em',
   },
 
   form: {
