@@ -27,20 +27,20 @@ const FacultyLayout = () => {
 
         <nav style={styles.nav}>
           <div
-            style={{ ...styles.navItem, ...(isActive('/adviser/dashboard') ? styles.navItemActive : {}) }}
-            onClick={() => navigate('/adviser/dashboard')}
+            style={{ ...styles.navItem, ...(isActive('/faculty/dashboard') ? styles.navItemActive : {}) }}
+            onClick={() => navigate('/faculty/dashboard')}
           >
             Dashboard
           </div>
           <div
-            style={{ ...styles.navItem, ...(isActive('/adviser/assignments') ? styles.navItemActive : {}) }}
-            onClick={() => navigate('/adviser/assignments')}
+            style={{ ...styles.navItem, ...(isActive('/faculty/assignments') ? styles.navItemActive : {}) }}
+            onClick={() => navigate('/faculty/assignments')}
           >
             My Assignments
           </div>
           <div
-            style={{ ...styles.navItem, ...(isActive('/adviser/notifications') ? styles.navItemActive : {}) }}
-            onClick={() => navigate('/adviser/notifications')}
+            style={{ ...styles.navItem, ...(isActive('/faculty/notifications') ? styles.navItemActive : {}) }}
+            onClick={() => navigate('/faculty/notifications')}
           >
             Notifications
           </div>
