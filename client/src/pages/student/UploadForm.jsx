@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
@@ -63,29 +63,14 @@ export default function UploadForm() {
     authors: "",
     program: "",
     school_year: "",
-    adviser_id: "",
   });
 
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [charCounts, setCharCounts] = useState({ abstract: 0, keywords: 0 });
-  const [advisers, setAdvisers] = useState([]);
 
   const schoolYears = generateSchoolYears();
-
-  useEffect(() => {
-    const fetchAdvisers = async () => {
-      try {
-        const res = await api.get("/advisers");
-        setAdvisers(res.data || []);
-      } catch (err) {
-        console.error("Failed to load advisers", err);
-      }
-    };
-
-    fetchAdvisers();
-  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -130,15 +115,14 @@ export default function UploadForm() {
       formData.append("keywords",    form.keywords);
       formData.append("authors",     form.authors);
       formData.append("program",     form.program);
-      formData.append("year",        form.school_year.split("-")[0]);
-      formData.append("adviser_id",  form.adviser_id);
+      formData.append("school_year", form.school_year);
       formData.append("file",        file);
 
       const res = await api.post("/papers/upload", formData);
 
       alert(`Submitted successfully! Paper ID: ${res.data.paperId} · Version: ${res.data.version}`);
 
-      setForm({ title: "", abstract: "", keywords: "", authors: "", program: "", school_year: "", adviser_id: "" });
+      setForm({ title: "", abstract: "", keywords: "", authors: "", program: "", school_year: "" });
       setFile(null);
       setCharCounts({ abstract: 0, keywords: 0 });
     } catch (err) {
@@ -194,18 +178,6 @@ export default function UploadForm() {
                 {schoolYears.map(y => <option key={y} value={y}>{y}</option>)}
               </SelectField>
             </div>
-          </div>
-
-          <div style={styles.fieldGroupFull}>
-            <FieldLabel>ADVISER</FieldLabel>
-            <SelectField name="adviser_id" value={form.adviser_id} onChange={handleChange}>
-              <option value="" disabled>Select Adviser</option>
-              {advisers.map(adviser => (
-                <option key={adviser.user_id} value={adviser.user_id}>
-                  {adviser.name}
-                </option>
-              ))}
-            </SelectField>
           </div>
 
           <div style={styles.fieldGroupFull}>

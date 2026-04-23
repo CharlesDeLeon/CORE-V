@@ -1,11 +1,12 @@
 const pool = require('../config/db')
 
 const uploadPaper = async (req, res) => {
-  const { title, authors, program, year, adviser_id } = req.body
+  const { title, authors, program, year, school_year, abstract, keywords } = req.body
   const userId = req.user.user_id
+  const effectiveSchoolYear = school_year || (year ? `${year}-${Number(year) + 1}` : '')
 
-  if (!title || !authors || !program || !year || !adviser_id) {
-    return res.status(400).json({ message: 'All fields including Adviser are required' })
+  if (!title || !authors || !program || !effectiveSchoolYear) {
+    return res.status(400).json({ message: 'All required fields are missing' })
   }
   if (!req.file) {
     return res.status(400).json({ message: 'File is required' })
@@ -15,40 +16,81 @@ const uploadPaper = async (req, res) => {
   try {
     await connection.beginTransaction()
 
-    const [existingPaper] = await connection.query(
-      'SELECT paper_id FROM research_papers WHERE user_id = ? AND title = ?',
-      [userId, title]
+    const [existingGroupRows] = await connection.query(
+      `SELECT rg.group_id
+       FROM research_groups rg
+       LEFT JOIN group_members gm ON gm.group_id = rg.group_id AND gm.user_id = ?
+       WHERE rg.created_by = ? OR gm.user_id = ?
+       ORDER BY rg.group_id ASC
+       LIMIT 1`,
+      [userId, userId, userId]
     )
 
-    let paperId
-    if (existingPaper.length > 0) {
-      paperId = existingPaper[0].paper_id 
+    let groupId
+    if (existingGroupRows.length > 0) {
+      groupId = existingGroupRows[0].group_id
     } else {
-      const [paperResult] = await connection.query(
-        `INSERT INTO research_papers (user_id, title, authors, program, year, adviser_id) 
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [userId, title, authors, program, year, adviser_id]
+      const [groupResult] = await connection.query(
+        `INSERT INTO research_groups (group_name, program, school_year, created_by)
+         VALUES (?, ?, ?, ?)`,
+        [`${title} Group`, program, effectiveSchoolYear, userId]
       )
-      paperId = paperResult.insertId
+      groupId = groupResult.insertId
+
+      await connection.query(
+        'INSERT INTO group_members (group_id, user_id) VALUES (?, ?)',
+        [groupId, userId]
+      )
+    }
+
+    const [existingSubmissionRows] = await connection.query(
+      `SELECT submission_id
+       FROM submissions
+       WHERE group_id = ? AND title = ?
+       ORDER BY submission_id DESC
+       LIMIT 1`,
+      [groupId, title]
+    )
+
+    let submissionId
+    if (existingSubmissionRows.length > 0) {
+      submissionId = existingSubmissionRows[0].submission_id
+    } else {
+      const [submissionResult] = await connection.query(
+        `INSERT INTO submissions
+          (group_id, title, abstract, keywords, authors, program, school_year, submitted_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          groupId,
+          title,
+          abstract || null,
+          keywords || null,
+          authors,
+          program,
+          effectiveSchoolYear,
+          userId
+        ]
+      )
+      submissionId = submissionResult.insertId
     }
 
     const [versionRows] = await connection.query(
-      'SELECT COALESCE(MAX(version_number), 0) AS latestVersion FROM versions WHERE paper_id = ?',
-      [paperId]
+      'SELECT COALESCE(MAX(version_number), 0) AS latestVersion FROM document_versions WHERE submission_id = ?',
+      [submissionId]
     )
     const nextVersion = Number(versionRows[0].latestVersion) + 1
 
     await connection.query(
-      `INSERT INTO versions (paper_id, file_path, version_number, uploader_id)
-       VALUES (?, ?, ?, ?)`,
-      [paperId, req.file.path, nextVersion, userId]
+      `INSERT INTO document_versions (submission_id, file_path, file_name, file_size, file_type, version_number, uploaded_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [submissionId, req.file.path, req.file.originalname, req.file.size || null, req.file.mimetype || null, nextVersion, userId]
     )
 
     await connection.commit()
     res.status(201).json({ 
       message: 'Version uploaded successfully', 
       version: nextVersion,
-      paperId: paperId 
+      paperId: submissionId
     })
 
   } catch (err) {
@@ -63,12 +105,28 @@ const uploadPaper = async (req, res) => {
 const getMyPapers = async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT rp.*, v.file_path, v.version_number, v.created_at as uploaded_at
-       FROM research_papers rp
-       LEFT JOIN versions v ON rp.paper_id = v.paper_id
-       WHERE rp.user_id = ?
-       AND v.version_number = (SELECT MAX(version_number) FROM versions WHERE paper_id = rp.paper_id)
-       ORDER BY rp.created_at DESC`,
+      `SELECT
+          s.submission_id AS paper_id,
+          s.title,
+          s.authors,
+          s.program,
+          s.status,
+          s.created_at,
+          dv.file_path,
+          dv.version_number,
+          dv.uploaded_at
+       FROM submissions s
+       LEFT JOIN document_versions dv ON dv.submission_id = s.submission_id
+       WHERE s.submitted_by = ?
+       AND (
+         dv.version_number IS NULL OR
+         dv.version_number = (
+           SELECT MAX(version_number)
+           FROM document_versions
+           WHERE submission_id = s.submission_id
+         )
+       )
+       ORDER BY s.created_at DESC`,
       [req.user.user_id]
     )
     res.json(rows)
