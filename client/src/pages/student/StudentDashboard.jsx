@@ -19,6 +19,7 @@ const StudentDashboard = () => {
   }, [])
 
   const timeAgo = (dateStr) => {
+    // eslint-disable-next-line react-hooks/purity
     const days = Math.floor((Date.now() - new Date(dateStr)) / 86400000)
     if (days === 0) return 'Today'
     if (days === 1) return 'Yesterday'
