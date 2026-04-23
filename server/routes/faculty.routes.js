@@ -3,15 +3,15 @@ const router = express.Router()
 const authMiddleware = require('../middleware/authMiddleware')
 const roleMiddleware = require('../middleware/roleMiddleware')
 const { 
-  listAdvisers,
+  listFaculties,
   getAssignedSubmissions,
   addFeedbackComment,
   submitReview,
   getPanelAssignments,
   getSubmissionComments
-} = require('../controllers/adviserController')
+} = require('../controllers/facultyController')
 
-router.get('/list', authMiddleware, roleMiddleware('student'), listAdvisers)
+router.get('/list', authMiddleware, roleMiddleware('student'), listFaculties)
 router.get('/submissions', authMiddleware, roleMiddleware('faculty'), getAssignedSubmissions)
 router.get('/assignments', authMiddleware, roleMiddleware('faculty'), getPanelAssignments)
 router.get('/submissions/:submission_id/comments', authMiddleware, roleMiddleware('faculty'), getSubmissionComments)

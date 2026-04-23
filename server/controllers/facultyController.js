@@ -1,11 +1,11 @@
 const pool = require('../config/db')
 
-const listAdvisers = async (_req, res) => {
+const listFaculties = async (_req, res) => {
   try {
     const [rows] = await pool.query(
       `SELECT user_id, name
        FROM users
-       WHERE role = 'Admin'
+       WHERE role = 'Faculty'
        ORDER BY name ASC`
     )
     res.json(rows)
@@ -17,7 +17,7 @@ const listAdvisers = async (_req, res) => {
 
 const getAssignedSubmissions = async (req, res) => {
   try {
-    const adviserId = req.user.user_id
+    const facultyId = req.user.user_id
     
     const [submissions] = await pool.query(
       `SELECT 
@@ -47,7 +47,7 @@ const getAssignedSubmissions = async (req, res) => {
        WHERE pa.faculty_id = ? AND (pa.role_in_panel = 'adviser' OR pa.role_in_panel = 'panelist')
        GROUP BY s.submission_id
        ORDER BY s.updated_at DESC`
-      , [adviserId, adviserId]
+      , [facultyId, facultyId]
     )
     
     res.json(submissions)
@@ -177,7 +177,7 @@ const getPanelAssignments = async (req, res) => {
        WHERE pa.faculty_id = ?
        GROUP BY pa.assignment_id, rg.group_id
        ORDER BY rg.group_name ASC`
-      , [adviserId]
+      , [facultyId]
     )
     
     res.json(assignments)
@@ -190,14 +190,14 @@ const getPanelAssignments = async (req, res) => {
 const getSubmissionComments = async (req, res) => {
   try {
     const { submission_id } = req.params
-    const adviserId = req.user.user_id
+    const facultyId = req.user.user_id
     const [access] = await pool.query(
       `SELECT s.submission_id 
        FROM submissions s
        JOIN research_groups rg ON s.group_id = rg.group_id
        JOIN panel_assignments pa ON rg.group_id = pa.group_id
        WHERE s.submission_id = ? AND pa.faculty_id = ?`,
-      [submission_id, adviserId]
+      [submission_id, facultyId]
     )
     
     if (access.length === 0) {
@@ -226,7 +226,7 @@ const getSubmissionComments = async (req, res) => {
 }
 
 module.exports = { 
-  listAdvisers,
+  listFaculties,
   getAssignedSubmissions,
   addFeedbackComment,
   submitReview,

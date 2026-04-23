@@ -1,7 +1,7 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import useAuth from '../../context/useAuth'
 
-const AdviserLayout = () => {
+const FacultyLayout = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -158,4 +158,4 @@ const styles = {
   },
 }
 
-export default AdviserLayout
+export default FacultyLayout
