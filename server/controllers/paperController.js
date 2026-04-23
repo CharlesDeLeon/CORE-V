@@ -136,4 +136,77 @@ const getMyPapers = async (req, res) => {
   }
 }
 
-module.exports = { uploadPaper, getMyPapers }
+const getPaperDetail = async (req, res) => {
+  const { paperId } = req.params
+  const userId = req.user.user_id
+
+  try {
+    const [submissionRows] = await pool.query(
+      `SELECT s.submission_id, s.title, s.abstract, s.keywords, s.authors, 
+              s.program, s.school_year, s.status, s.created_at, s.updated_at
+       FROM submissions s
+       WHERE s.submission_id = ? AND s.submitted_by = ?`,
+      [paperId, userId]
+    )
+
+    if (submissionRows.length === 0) {
+      return res.status(404).json({ message: 'Paper not found' })
+    }
+
+    const submission = submissionRows[0]
+
+    const [versions] = await pool.query(
+      `SELECT version_number, file_path, file_name, file_size, file_type, uploaded_at
+       FROM document_versions
+       WHERE submission_id = ?
+       ORDER BY version_number DESC`,
+      [paperId]
+    )
+    const [reviews] = await pool.query(
+      `SELECT r.review_id, r.reviewer_id, u.name AS reviewer_name, 
+              r.status_assigned, r.reviewed_at
+       FROM reviews r
+       JOIN users u ON u.user_id = r.reviewer_id
+       WHERE r.submission_id = ?
+       ORDER BY r.reviewed_at DESC`,
+      [paperId]
+    )
+
+    const reviewsWithComments = await Promise.all(
+      reviews.map(async (review) => {
+        const [comments] = await pool.query(
+          `SELECT comment_id, author_id, u.name AS author_name, comment_text, created_at
+           FROM review_comments rc
+           JOIN users u ON u.user_id = rc.author_id
+           WHERE rc.submission_id = ? AND rc.author_id = ?
+           ORDER BY rc.created_at ASC`,
+          [paperId, review.reviewer_id]
+        )
+        return {
+          ...review,
+          comments
+        }
+      })
+    )
+
+    res.json({
+      submission_id: submission.submission_id,
+      title: submission.title,
+      abstract: submission.abstract,
+      keywords: submission.keywords,
+      authors: submission.authors,
+      program: submission.program,
+      school_year: submission.school_year,
+      status: submission.status,
+      created_at: submission.created_at,
+      updated_at: submission.updated_at,
+      versions,
+      reviews: reviewsWithComments
+    })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: 'Server error' })
+  }
+}
+
+module.exports = { uploadPaper, getMyPapers, getPaperDetail }

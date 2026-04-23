@@ -16,7 +16,6 @@ function App() {
           <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/login" element={<Login />} />
 
-          {/* Student layout wraps all student pages */}
           <Route
             path="/student"
             element={
