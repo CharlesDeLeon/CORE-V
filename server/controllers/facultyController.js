@@ -204,6 +204,39 @@ const getSubmissionComments = async (req, res) => {
       return res.status(403).json({ message: 'Unauthorized access' })
     }
     
+    const [submissionData] = await pool.query(
+      `SELECT 
+        s.submission_id,
+        s.group_id,
+        s.title,
+        s.abstract,
+        s.keywords,
+        s.authors,
+        s.program,
+        s.school_year,
+        s.stage,
+        s.status,
+        s.created_at,
+        s.updated_at,
+        rg.group_name,
+        u.name as submitted_by_name,
+        COALESCE(r.status_assigned, 'pending') as review_status,
+        r.review_id,
+        COUNT(DISTINCT rc.comment_id) as comments_count
+       FROM submissions s
+       JOIN research_groups rg ON s.group_id = rg.group_id
+       JOIN users u ON s.submitted_by = u.user_id
+       LEFT JOIN reviews r ON s.submission_id = r.submission_id AND r.reviewer_id = ?
+       LEFT JOIN review_comments rc ON s.submission_id = rc.submission_id
+       WHERE s.submission_id = ?
+       GROUP BY s.submission_id`,
+      [facultyId, submission_id]
+    )
+
+    if (submissionData.length === 0) {
+      return res.status(404).json({ message: 'Submission not found' })
+    }
+    
     const [comments] = await pool.query(
       `SELECT 
         rc.comment_id,
@@ -218,7 +251,10 @@ const getSubmissionComments = async (req, res) => {
       [submission_id]
     )
     
-    res.json(comments)
+    res.json({
+      submission: submissionData[0],
+      comments: comments
+    })
   } catch (err) {
     console.error(err)
     res.status(500).json({ message: 'Failed to load comments' })
