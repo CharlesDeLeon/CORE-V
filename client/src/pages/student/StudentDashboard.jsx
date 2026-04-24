@@ -12,6 +12,12 @@ const StudentDashboard = () => {
   const [error, setError] = useState(null)
 
   useEffect(() => {
+  if (user?.role === 'faculty') {
+    navigate('/faculty/dashboard')
+  }
+}, [user, navigate])
+
+  useEffect(() => {
     api.get('/papers/my')
       .then(res => setPapers(res.data))
       .catch(() => setError('Failed to load papers.'))

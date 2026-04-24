@@ -15,7 +15,7 @@ CREATE TABLE users (
   user_id       INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name          VARCHAR(150)  NOT NULL,
   email         VARCHAR(150)  NOT NULL UNIQUE,
-  password_hash VARCHAR(255)  NOT NULL,    
+  password      VARCHAR(255)  NOT NULL,    
   role          ENUM('student','faculty','coordinator','sysadmin') NOT NULL,
   program       VARCHAR(100)  DEFAULT NULL,
   is_active     TINYINT(1)    NOT NULL DEFAULT 1,
@@ -154,9 +154,3 @@ CREATE INDEX idx_notifications_user      ON notifications(user_id, is_read);
 CREATE INDEX idx_audit_user              ON audit_logs(user_id);
 CREATE INDEX idx_audit_target            ON audit_logs(target_type, target_id);
 ALTER TABLE submissions ADD FULLTEXT INDEX ft_search (title, keywords, authors);
-
-INSERT INTO users (name, email, password_hash, role, program) VALUES
-  ('Juan dela Cruz',    'student@corev.test',     '$2a$10$REPLACE_WITH_REAL_HASH', 'student',     'BSIT'),
-  ('Prof. Maria Santos','faculty@corev.test',     '$2a$10$REPLACE_WITH_REAL_HASH', 'faculty',     NULL),
-  ('Coord. Ana Reyes',  'coordinator@corev.test', '$2a$10$REPLACE_WITH_REAL_HASH', 'coordinator', NULL),
-  ('IT Admin',          'sysadmin@corev.test',    '$2a$10$REPLACE_WITH_REAL_HASH', 'sysadmin',    NULL);

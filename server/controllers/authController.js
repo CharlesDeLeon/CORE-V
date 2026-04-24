@@ -4,6 +4,7 @@ const jwt =  require('jsonwebtoken')
 
 const login = async (req, res) => {
     const { email, password } = req.body
+    console.log('Login attempt - Email:', email, '| Password received:', password, '| Password length:', password?.length)
 
     if (!email || !password) {
         return res.status(400).json({ message: 'All fields are required' })
@@ -11,15 +12,20 @@ const login = async (req, res) => {
 
     try {
         const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email])
+        console.log('Query result for email:', email, '| Rows found:', rows.length)
 
         if (rows.length === 0) {
+            console.log('User not found for email:', email)
             return res.status(401).json({ message: 'Invalid Credentials' })
         }
 
         const user = rows[0]
+        console.log('User found:', user.email, '| Hash exists:', !!user.password, '| Hash:', user.password)
         const isMatch = await bcrypt.compare(password, user.password)
+        console.log('Password match result:', isMatch)
 
         if (!isMatch) {
+            console.log('Password mismatch for user:', email)
             return res.status(401).json({ message: 'Invalid Credentials' })
         }
 

@@ -10,6 +10,8 @@ import PaperDetail from './pages/student/PaperDetail'
 
 import FacultyLayout from './pages/faculty/FacultyLayout'
 import FacultyDashboard from './pages/faculty/FacultyDashboard'
+import AssignmentsList from './pages/faculty/AssignmentsList'
+import SubmissionDetail from './pages/faculty/SubmissionDetail'
 
 import AdminDashboard from './pages/admin/AdminDashboard'
 
@@ -45,6 +47,8 @@ function App() {
           >
             <Route index element={<Navigate to="/faculty/dashboard" replace />} />
             <Route path="dashboard" element={<FacultyDashboard />} />
+            <Route path="assignments" element={<AssignmentsList />} />
+            <Route path="submission/:submission_id" element={<SubmissionDetail />} />
           </Route>
 
           <Route
