@@ -175,7 +175,7 @@ const getPaperDetail = async (req, res) => {
     const reviewsWithComments = await Promise.all(
       reviews.map(async (review) => {
         const [comments] = await pool.query(
-          `SELECT comment_id, author_id, u.name AS author_name, comment_text, created_at
+          `SELECT comment_id, author_id, u.name AS author_name, comment_text, rc.created_at
            FROM review_comments rc
            JOIN users u ON u.user_id = rc.author_id
            WHERE rc.submission_id = ? AND rc.author_id = ?
