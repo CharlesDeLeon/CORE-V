@@ -10,8 +10,10 @@ const ProtectedRoute = ({ children, allowedRole }) => {
 
   if (allowedRole) {
     const currentRole = activeUser.role?.toLowerCase()
-    const requiredRole = allowedRole.toLowerCase()
-    if (currentRole !== requiredRole) return <Navigate to="/login" />
+    const allowedRoles = Array.isArray(allowedRole) ? allowedRole : [allowedRole]
+    const normalizedRoles = allowedRoles.map(role => role.toLowerCase())
+
+    if (!normalizedRoles.includes(currentRole)) return <Navigate to="/login" />
   }
 
   return children

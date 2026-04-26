@@ -1,49 +1,6 @@
 const pool = require('../config/db')
 const { logAction, getAuditLogs, getAuditSummary } = require('../utils/auditLogger')
-
-// Role permissions mapping
-const rolePermissions = {
-  student: {
-    canUploadPapers: true,
-    canViewOwnSubmissions: true,
-    canViewComments: true,
-    canViewNotifications: true
-  },
-  faculty: {
-    canUploadPapers: true,
-    canViewSubmissions: true,
-    canAddComments: true,
-    canSubmitReview: true,
-    canManageAssignments: true,
-    canViewNotifications: true,
-    canViewAuditLogs: false
-  },
-  coordinator: {
-    canUploadPapers: true,
-    canViewSubmissions: true,
-    canAddComments: true,
-    canSubmitReview: true,
-    canManageAssignments: true,
-    canManageUsers: true,
-    canViewNotifications: true,
-    canViewAuditLogs: true,
-    canExportData: true
-  },
-  sysadmin: {
-    canUploadPapers: true,
-    canViewSubmissions: true,
-    canAddComments: true,
-    canSubmitReview: true,
-    canManageAssignments: true,
-    canManageUsers: true,
-    canManageRoles: true,
-    canViewNotifications: true,
-    canViewAuditLogs: true,
-    canExportData: true,
-    canManageBackups: true,
-    canConfigureSystem: true
-  }
-}
+const { rolePermissions, validRoles } = require('../constants/rbac')
 
 // Get all users with pagination
 const getAllUsers = async (req, res) => {
@@ -51,7 +8,7 @@ const getAllUsers = async (req, res) => {
     const { page = 1, limit = 20, role = '', search = '' } = req.query
     const offset = (page - 1) * limit
 
-    let query = `SELECT user_id, name, email, role, created_at, updated_at 
+    let query = `SELECT user_id, name, email, role, is_active, program, created_at, updated_at 
                  FROM users 
                  WHERE 1=1`
     const params = []
@@ -111,7 +68,7 @@ const getUserDetail = async (req, res) => {
     const { userId } = req.params
 
     const [users] = await pool.query(
-      `SELECT user_id, name, email, role, created_at, updated_at 
+      `SELECT user_id, name, email, role, is_active, program, created_at, updated_at 
        FROM users 
        WHERE user_id = ?`,
       [userId]
@@ -138,20 +95,38 @@ const updateUserRole = async (req, res) => {
     const { userId } = req.params
     const { role } = req.body
 
-    // Validate role
-    const validRoles = ['student', 'faculty', 'coordinator', 'sysadmin']
     if (!validRoles.includes(role)) {
       return res.status(400).json({ message: 'Invalid role' })
     }
 
     // Check user exists
     const [users] = await pool.query(
-      `SELECT user_id FROM users WHERE user_id = ?`,
+      `SELECT user_id, role FROM users WHERE user_id = ?`,
       [userId]
     )
 
     if (users.length === 0) {
       return res.status(404).json({ message: 'User not found' })
+    }
+
+    const existingUser = users[0]
+
+    if (String(existingUser.role).toLowerCase() === role) {
+      return res.json({ message: 'User already has this role' })
+    }
+
+    if (req.user.user_id === parseInt(userId, 10) && role !== 'sysadmin') {
+      return res.status(400).json({ message: 'You cannot remove your own system administrator access' })
+    }
+
+    if (String(existingUser.role).toLowerCase() === 'sysadmin' && role !== 'sysadmin') {
+      const [sysadmins] = await pool.query(
+        `SELECT COUNT(*) AS total FROM users WHERE role = 'sysadmin'`
+      )
+
+      if (sysadmins[0].total <= 1) {
+        return res.status(400).json({ message: 'At least one system administrator must remain assigned' })
+      }
     }
 
     // Update role
@@ -166,7 +141,11 @@ const updateUserRole = async (req, res) => {
       'update_role',
       'user',
       userId,
-      { new_role: role, updated_by: req.user.user_id }
+      {
+        previous_role: existingUser.role,
+        new_role: role,
+        updated_by: req.user.user_id
+      }
     )
 
     res.json({ message: 'User role updated successfully' })

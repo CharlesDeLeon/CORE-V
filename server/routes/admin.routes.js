@@ -8,7 +8,9 @@ const {
   updateUserRole,
   getRolePermissions,
   getAllRolePermissions,
-  getUserStats
+  getUserStats,
+  getAuditLogsList,
+  getAuditLogsSummary
 } = require('../controllers/adminController')
 
 // All admin endpoints require authentication and sysadmin role
@@ -26,5 +28,7 @@ router.get('/roles/:role/permissions', getRolePermissions)
 
 // Statistics
 router.get('/stats/users', getUserStats)
+router.get('/audit-logs', getAuditLogsList)
+router.get('/audit-summary', getAuditLogsSummary)
 
 module.exports = router
