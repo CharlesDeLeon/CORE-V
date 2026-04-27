@@ -14,6 +14,7 @@ import AssignmentsList from './pages/faculty/AssignmentsList'
 import SubmissionDetail from './pages/faculty/SubmissionDetail'
 
 import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminLayout from './pages/admin/AdminLayout'
 
 
 function App() {
@@ -55,10 +56,13 @@ function App() {
             path="/admin"
             element={
               <ProtectedRoute allowedRole={['sysadmin', 'coordinator', 'admin']}>
-                <AdminDashboard />
+                <AdminLayout />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+          </Route>
         </Routes>
       </AuthProvider>
     </BrowserRouter>
