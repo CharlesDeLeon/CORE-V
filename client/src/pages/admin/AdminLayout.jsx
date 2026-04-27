@@ -39,10 +39,16 @@ const AdminLayout = () => {
             Audit Trail
           </div>
           <div
-            style={{ ...styles.navItem, ...(isActive('/admin/storage') ? styles.navItemActive : {}) }}
-            onClick={() => navigate('/admin/storage')}
+            style={{ ...styles.navItem, ...(isActive('/admin/manageUsers') ? styles.navItemActive : {}) }}
+            onClick={() => navigate('/admin/manageUsers')}
           >
-            Storage
+            Manage Users
+          </div>
+          <div
+            style={{ ...styles.navItem, ...(isActive('/admin/manageStorage') ? styles.navItemActive : {}) }}
+            onClick={() => navigate('/admin/manageStorage')}
+          >
+            Manage Storage
           </div>
         </nav>
 

@@ -15,6 +15,9 @@ import SubmissionDetail from './pages/faculty/SubmissionDetail'
 
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminLayout from './pages/admin/AdminLayout'
+import AuditTrail from './pages/admin/AuditTrail'
+import ManageUsers from './pages/admin/ManageUsers'
+import ManageStorage from './pages/admin/ManageStorage'
 
 
 function App() {
@@ -62,6 +65,9 @@ function App() {
           >
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="auditTrail" element={<AuditTrail />} />
+            <Route path="manageUsers" element={<ManageUsers />} />
+            <Route path="manageStorage" element={<ManageStorage />} />
           </Route>
         </Routes>
       </AuthProvider>
