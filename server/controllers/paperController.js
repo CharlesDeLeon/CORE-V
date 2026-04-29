@@ -53,6 +53,7 @@ const uploadPaper = async (req, res) => {
     )
 
     let submissionId
+    let createdNewSubmission = false
     if (existingSubmissionRows.length > 0) {
       submissionId = existingSubmissionRows[0].submission_id
     } else {
@@ -72,6 +73,7 @@ const uploadPaper = async (req, res) => {
         ]
       )
       submissionId = submissionResult.insertId
+      createdNewSubmission = true
     }
 
     const [versionRows] = await connection.query(
@@ -87,8 +89,31 @@ const uploadPaper = async (req, res) => {
     )
 
     await connection.commit()
-    res.status(201).json({ 
-      message: 'Version uploaded successfully', 
+
+    try {
+      if (req && req.audit && typeof req.audit.log === 'function') {
+        await req.audit.log({
+          action: 'UPLOAD_VERSION',
+          target_type: 'submission',
+          target_id: submissionId,
+          changes: { version: nextVersion, file_name: req.file.originalname }
+        })
+
+        if (createdNewSubmission) {
+          await req.audit.log({
+            action: 'CREATE_SUBMISSION',
+            target_type: 'submission',
+            target_id: submissionId,
+            changes: { title, authors, program, school_year: effectiveSchoolYear }
+          })
+        }
+      }
+    } catch (e) {
+      console.error('Audit logging failed', e)
+    }
+
+    res.status(201).json({
+      message: 'Version uploaded successfully',
       version: nextVersion,
       paperId: submissionId
     })

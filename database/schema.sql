@@ -132,12 +132,16 @@ CREATE TABLE notifications (
 
 CREATE TABLE audit_logs (
   log_id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  user_id         INT UNSIGNED  DEFAULT NULL,             -- NULL if system action
-  action          VARCHAR(100)  NOT NULL,                 -- e.g. 'UPLOAD_VERSION', 'STATUS_CHANGED'
-  target_type     VARCHAR(50)   DEFAULT NULL,             -- e.g. 'submission', 'user'
-  target_id       INT UNSIGNED  DEFAULT NULL,             -- ID of affected record
-  details         TEXT          DEFAULT NULL,             -- JSON string for extra context
-  ip_address      VARCHAR(45)   DEFAULT NULL,
+  user_id         INT UNSIGNED  DEFAULT NULL,            
+  actor_name      VARCHAR(150)  DEFAULT NULL,
+  action          VARCHAR(100)  NOT NULL,          
+  target_type     VARCHAR(50)   DEFAULT NULL,          
+  target_id       INT UNSIGNED  DEFAULT NULL,            
+  changes         JSON          DEFAULT NULL,             
+  details         TEXT          DEFAULT NULL,           
+  user_agent      VARCHAR(500)  DEFAULT NULL,
+  correlation_id  VARCHAR(100)  DEFAULT NULL,
+  request_id      VARCHAR(100)  DEFAULT NULL,
   created_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL

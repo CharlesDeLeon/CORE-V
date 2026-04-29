@@ -84,6 +84,20 @@ const addFeedbackComment = async (req, res) => {
        VALUES (?, ?, ?)`,
       [submission_id, author_id, comment_text]
     )
+
+    // Audit log for added comment
+    try {
+      if (req && req.audit && typeof req.audit.log === 'function') {
+        await req.audit.log({
+          action: 'ADD_COMMENT',
+          target_type: 'submission',
+          target_id: submission_id,
+          changes: { comment_id: result.insertId, comment_text }
+        })
+      }
+    } catch (e) {
+      console.error('Audit log failed for addFeedbackComment', e)
+    }
     
     res.status(201).json({ 
       comment_id: result.insertId,
@@ -123,12 +137,13 @@ const submitReview = async (req, res) => {
     }
 
     const [existingReview] = await pool.query(
-      `SELECT review_id FROM reviews WHERE submission_id = ? AND reviewer_id = ?`,
+      `SELECT review_id, status_assigned FROM reviews WHERE submission_id = ? AND reviewer_id = ?`,
       [submission_id, reviewer_id]
     )
     
     let reviewId
     if (existingReview.length > 0) {
+      const previousStatus = existingReview[0].status_assigned
       await pool.query(
         `UPDATE reviews 
          SET status_assigned = ?, updated_at = NOW()
@@ -136,6 +151,20 @@ const submitReview = async (req, res) => {
         [status_assigned, submission_id, reviewer_id]
       )
       reviewId = existingReview[0].review_id
+
+      // Audit log for update
+      try {
+        if (req && req.audit && typeof req.audit.log === 'function') {
+          await req.audit.log({
+            action: 'UPDATE_REVIEW',
+            target_type: 'review',
+            target_id: reviewId,
+            changes: { previous_status: previousStatus, new_status: status_assigned }
+          })
+        }
+      } catch (e) {
+        console.error('Audit log failed for submitReview (update)', e)
+      }
     } else {
       // Create new review
       const [result] = await pool.query(
@@ -144,6 +173,20 @@ const submitReview = async (req, res) => {
         [submission_id, reviewer_id, status_assigned]
       )
       reviewId = result.insertId
+
+      // Audit log for creation
+      try {
+        if (req && req.audit && typeof req.audit.log === 'function') {
+          await req.audit.log({
+            action: 'CREATE_REVIEW',
+            target_type: 'review',
+            target_id: reviewId,
+            changes: { status: status_assigned, submission_id }
+          })
+        }
+      } catch (e) {
+        console.error('Audit log failed for submitReview (create)', e)
+      }
     }
     
     res.json({ 

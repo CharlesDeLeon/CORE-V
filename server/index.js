@@ -14,6 +14,9 @@ app.use(cors({origin: 'http://localhost:5173'}))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true}))
 
+// Audit middleware to expose req.audit and correlation/request ids
+app.use(require('./middleware/auditMiddleware'))
+
 app.use('/api/auth', require('./routes/auth.routes'))
 app.use('/api/faculty', require('./routes/faculty.routes'))
 app.use('/api/papers', require('./routes/paper.routes'))

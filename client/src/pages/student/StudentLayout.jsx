@@ -63,11 +63,17 @@ const styles = {
   root: {
     minHeight: '100vh',
     display: 'flex',
+    alignItems: 'flex-start',
     background: 'linear-gradient(135deg, #1e2a6e 0%, #0f172a 100%)',
     color: '#fff',
   },
   sidebar: {
     width: '260px',
+    flexShrink: 0,
+    position: 'sticky',
+    top: 0,
+    height: '100vh',
+    overflowY: 'auto',
     background: '#0b1228cc',
     borderRight: '1px solid rgba(255,255,255,0.08)',
     display: 'flex',

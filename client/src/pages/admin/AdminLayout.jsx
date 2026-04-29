@@ -80,6 +80,11 @@ const styles = {
   },
   sidebar: {
     width: '260px',
+    flexShrink: 0,
+    position: 'sticky',
+    top: 0,
+    height: '100vh',
+    overflowY: 'auto',
     background: '#0b1228cc',
     borderRight: '1px solid rgba(255,255,255,0.08)',
     display: 'flex',
