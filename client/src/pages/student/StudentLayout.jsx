@@ -38,6 +38,12 @@ const StudentLayout = () => {
           >
             New Upload
           </div>
+          <div
+            style={{ ...styles.navItem, ...(isActive('/student/history') ? styles.navItemActive : {}) }}
+            onClick={() => navigate('/student/history')}
+          >
+            History
+          </div>
         </nav>
 
         <div style={styles.profile}>

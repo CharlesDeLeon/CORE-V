@@ -22,6 +22,7 @@ app.use('/api/faculty', require('./routes/faculty.routes'))
 app.use('/api/papers', require('./routes/paper.routes'))
 app.use('/api/reviews', require('./routes/review.routes'))
 app.use('/api/admin', require('./routes/admin.routes'))
+app.use('/api/notifications', require('./routes/notification.routes'))
 
 app.get('/api', (req, res ) => {
     res.json({ message: 'CORE V API is running' })
