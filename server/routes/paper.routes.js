@@ -3,7 +3,7 @@ const router = express.Router()
 const path = require('path')
 const fs = require('fs')
 const multer = require('multer')
-const { uploadPaper, getMyPapers, getPaperDetail } = require('../controllers/paperController')
+const { uploadPaper, uploadPaperVersion, getMyPapers, getPaperDetail } = require('../controllers/paperController')
 const authMiddleware = require('../middleware/authMiddleware')
 const roleMiddleware = require('../middleware/roleMiddleware')
 
@@ -49,6 +49,14 @@ router.post(
   roleMiddleware('Student'),
   upload.single('file'),
   uploadPaper
+)
+
+router.post(
+  '/:paperId/versions',
+  authMiddleware,
+  roleMiddleware('Student'),
+  upload.single('file'),
+  uploadPaperVersion
 )
 
 module.exports = router

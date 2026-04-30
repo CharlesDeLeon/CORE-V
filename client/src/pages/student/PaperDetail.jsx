@@ -3,6 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import StatusBadge from '../../components/StatusBadge'
 
+const ALLOWED_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]
+
 const PaperDetail = () => {
   const { paperId } = useParams()
   const navigate = useNavigate()
@@ -10,19 +16,23 @@ const PaperDetail = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [expandedReview, setExpandedReview] = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState(null)
+
+  const fetchPaper = async () => {
+    setLoading(true)
+    try {
+      const res = await api.get(`/papers/${paperId}`)
+      setPaper(res.data)
+      setError(null)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to load paper details')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const fetchPaper = async () => {
-      try {
-        const res = await api.get(`/papers/${paperId}`)
-        setPaper(res.data)
-        setError(null)
-      } catch (err) {
-        setError(err.response?.data?.message || 'Failed to load paper details')
-      } finally {
-        setLoading(false)
-      }
-    }
     fetchPaper()
   }, [paperId])
 
@@ -44,8 +54,9 @@ const PaperDetail = () => {
     if (!status) return { background: '#ffffff22', color: '#fff' }
     const normalizedStatus = status.toLowerCase()
     if (normalizedStatus === 'approved') return { background: '#22c55e22', color: '#22c55e' }
-    if (normalizedStatus === 'needs_revision' || normalizedStatus === 'under_review')
+    if (normalizedStatus === 'needs_revision' || normalizedStatus === 'under_review') {
       return { background: '#f9731622', color: '#f97316' }
+    }
     if (normalizedStatus === 'rejected') return { background: '#ef444422', color: '#ef4444' }
     return { background: '#ffffff22', color: '#fff' }
   }
@@ -60,10 +71,42 @@ const PaperDetail = () => {
   }
 
   const downloadFile = (filePath, fileName) => {
+    const fileNameOnly = filePath?.split('\\').pop()?.split('/').pop() || filePath
     const link = document.createElement('a')
-    link.href = `http://localhost:5000/${filePath}`
+    link.href = `http://localhost:5000/uploads/${encodeURIComponent(fileNameOnly)}`
     link.download = fileName
     link.click()
+  }
+
+  const handleUploadNewVersion = async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+
+    if (!file) return
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setUploadError('Only PDF, DOC, and DOCX files are allowed.')
+      return
+    }
+
+    if (file.size > 20 * 1024 * 1024) {
+      setUploadError('File exceeds the 20 MB limit.')
+      return
+    }
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      setUploading(true)
+      setUploadError(null)
+      await api.post(`/papers/${paperId}/versions`, formData)
+      await fetchPaper()
+    } catch (err) {
+      setUploadError(err.response?.data?.message || 'Failed to upload new version.')
+    } finally {
+      setUploading(false)
+    }
   }
 
   if (loading) {
@@ -106,17 +149,27 @@ const PaperDetail = () => {
 
   return (
     <div style={styles.container}>
-      {/* Top Bar */}
       <div style={styles.topBar}>
         <button style={styles.backBtn} onClick={() => navigate(-1)}>← Back</button>
-        <StatusBadge status={paper.status} />
+        <div style={styles.topActions}>
+          <label style={styles.uploadBtnLabel}>
+            {uploading ? 'Uploading...' : 'Upload new version'}
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={handleUploadNewVersion}
+              style={styles.hiddenFileInput}
+              disabled={uploading}
+            />
+          </label>
+          <StatusBadge status={paper.status} />
+        </div>
       </div>
 
-      {/* Main Content */}
+      {uploadError && <div style={styles.uploadError}>{uploadError}</div>}
+
       <div style={styles.contentRow}>
-        {/* Left Column */}
         <div style={styles.leftColumn}>
-          {/* Metadata Section */}
           <div style={styles.section}>
             <h1 style={styles.title}>{paper.title}</h1>
             <div style={styles.metadataGrid}>
@@ -139,7 +192,6 @@ const PaperDetail = () => {
             </div>
           </div>
 
-          {/* Abstract Section */}
           {paper.abstract && (
             <div style={styles.section}>
               <h2 style={styles.sectionTitle}>ABSTRACT</h2>
@@ -147,7 +199,6 @@ const PaperDetail = () => {
             </div>
           )}
 
-          {/* Keywords Section */}
           {paper.keywords && (
             <div style={styles.section}>
               <h2 style={styles.sectionTitle}>KEYWORDS</h2>
@@ -161,7 +212,6 @@ const PaperDetail = () => {
             </div>
           )}
 
-          {/* Versions Section */}
           <div style={styles.section}>
             <h2 style={styles.sectionTitle}>FILE VERSIONS</h2>
             {paper.versions && paper.versions.length > 0 ? (
@@ -195,9 +245,7 @@ const PaperDetail = () => {
           </div>
         </div>
 
-        {/* Right Column */}
         <div style={styles.rightColumn}>
-          {/* Status Panel */}
           <div style={styles.statusPanel}>
             <p style={styles.statusLabel}>SUBMISSION STATUS</p>
             <div style={styles.statusDisplay}>
@@ -211,7 +259,6 @@ const PaperDetail = () => {
             <p style={styles.statusDate}>Updated {timeAgo(paper.updated_at)}</p>
           </div>
 
-          {/* Reviews Section */}
           <div style={styles.reviewsPanel}>
             <h2 style={styles.reviewsTitle}>REVIEWS & FEEDBACK</h2>
             {paper.reviews && paper.reviews.length > 0 ? (
@@ -284,6 +331,11 @@ const styles = {
     alignItems: 'center',
     marginBottom: '2rem',
   },
+  topActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
   backBtn: {
     background: 'transparent',
     border: 'none',
@@ -291,6 +343,31 @@ const styles = {
     fontSize: '14px',
     cursor: 'pointer',
     padding: '8px 12px',
+  },
+  uploadBtnLabel: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '10px 14px',
+    borderRadius: '10px',
+    background: '#FFBE4F',
+    color: '#1e2a6e',
+    fontSize: '13px',
+    fontWeight: '700',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+  },
+  hiddenFileInput: {
+    display: 'none',
+  },
+  uploadError: {
+    marginBottom: '1rem',
+    padding: '12px 14px',
+    borderRadius: '10px',
+    background: '#ef444422',
+    border: '1px solid #ef4444',
+    color: '#ef4444',
+    fontSize: '14px',
   },
   contentRow: {
     display: 'grid',

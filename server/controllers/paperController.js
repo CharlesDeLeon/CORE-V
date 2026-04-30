@@ -127,6 +127,84 @@ const uploadPaper = async (req, res) => {
   }
 }
 
+const uploadPaperVersion = async (req, res) => {
+  const { paperId } = req.params
+  const userId = req.user.user_id
+
+  if (!req.file) {
+    return res.status(400).json({ message: 'File is required' })
+  }
+
+  const connection = await pool.getConnection()
+  try {
+    await connection.beginTransaction()
+
+    const [submissionRows] = await connection.query(
+      `SELECT submission_id, title, submitted_by
+       FROM submissions
+       WHERE submission_id = ? AND submitted_by = ?`,
+      [paperId, userId]
+    )
+
+    if (submissionRows.length === 0) {
+      await connection.rollback()
+      return res.status(404).json({ message: 'Paper not found' })
+    }
+
+    const submission = submissionRows[0]
+
+    const [versionRows] = await connection.query(
+      `SELECT COALESCE(MAX(version_number), 0) AS latestVersion
+       FROM document_versions
+       WHERE submission_id = ?`,
+      [paperId]
+    )
+    const nextVersion = Number(versionRows[0].latestVersion) + 1
+
+    await connection.query(
+      `INSERT INTO document_versions
+        (submission_id, file_path, file_name, file_size, file_type, version_number, uploaded_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        paperId,
+        req.file.path,
+        req.file.originalname,
+        req.file.size || null,
+        req.file.mimetype || null,
+        nextVersion,
+        userId
+      ]
+    )
+
+    await connection.commit()
+
+    try {
+      if (req && req.audit && typeof req.audit.log === 'function') {
+        await req.audit.log({
+          action: 'UPLOAD_VERSION',
+          target_type: 'submission',
+          target_id: submission.submission_id,
+          changes: { version: nextVersion, file_name: req.file.originalname }
+        })
+      }
+    } catch (e) {
+      console.error('Audit logging failed', e)
+    }
+
+    res.status(201).json({
+      message: 'New version uploaded successfully',
+      version: nextVersion,
+      paperId: submission.submission_id
+    })
+  } catch (err) {
+    await connection.rollback()
+    console.error(err)
+    res.status(500).json({ message: 'Server error during version upload' })
+  } finally {
+    connection.release()
+  }
+}
+
 const getMyPapers = async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -234,4 +312,4 @@ const getPaperDetail = async (req, res) => {
   }
 }
 
-module.exports = { uploadPaper, getMyPapers, getPaperDetail }
+module.exports = { uploadPaper, uploadPaperVersion, getMyPapers, getPaperDetail }

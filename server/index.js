@@ -1,6 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 const dotenv = require('dotenv')
+const path = require('path')
 
 dotenv.config()
 
@@ -13,6 +14,7 @@ const app = express()
 app.use(cors({origin: 'http://localhost:5173'}))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true}))
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 // Audit middleware to expose req.audit and correlation/request ids
 app.use(require('./middleware/auditMiddleware'))
