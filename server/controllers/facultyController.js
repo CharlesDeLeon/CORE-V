@@ -59,7 +59,8 @@ const getAssignedSubmissions = async (req, res) => {
 
 const addFeedbackComment = async (req, res) => {
   try {
-    const { submission_id, comment_text } = req.body
+    const { submission_id } = req.params
+    const { comment_text } = req.body
     const author_id = req.user.user_id
     
     if (!submission_id || !comment_text) {
@@ -111,7 +112,8 @@ const addFeedbackComment = async (req, res) => {
 
 const submitReview = async (req, res) => {
   try {
-    const { submission_id, status_assigned } = req.body
+    const { submission_id } = req.params
+    const { status_assigned } = req.body
     const reviewer_id = req.user.user_id
     
     if (!submission_id || !status_assigned) {
