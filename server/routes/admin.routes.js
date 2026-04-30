@@ -5,7 +5,10 @@ const roleMiddleware = require('../middleware/roleMiddleware')
 const {
   getAllUsers,
   getUserDetail,
+  createUser,
+  deleteUser,
   updateUserRole,
+  updateUser,
   getRolePermissions,
   getAllRolePermissions,
   getUserStats,
@@ -19,7 +22,10 @@ router.use(roleMiddleware('sysadmin', 'coordinator'))
 
 // User management
 router.get('/users', getAllUsers)
+router.post('/users', roleMiddleware('sysadmin'), createUser)
 router.get('/users/:userId', getUserDetail)
+router.put('/users/:userId', roleMiddleware('sysadmin'), updateUser)
+router.delete('/users/:userId', roleMiddleware('sysadmin'), deleteUser)
 router.patch('/users/:userId/role', roleMiddleware('sysadmin'), updateUserRole)
 
 // Role and permissions

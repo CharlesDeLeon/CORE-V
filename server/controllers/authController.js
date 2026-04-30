@@ -20,6 +20,10 @@ const login = async (req, res) => {
         }
 
         const user = rows[0]
+        if (Number(user.is_active) === 0) {
+            return res.status(403).json({ message: 'This account is inactive. Please contact an administrator.' })
+        }
+
         console.log('User found:', user.email, '| Hash exists:', !!user.password, '| Hash:', user.password)
         const isMatch = await bcrypt.compare(password, user.password)
         console.log('Password match result:', isMatch)
@@ -42,6 +46,7 @@ const login = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                is_active: user.is_active,
             },
         })
     } catch (err) {

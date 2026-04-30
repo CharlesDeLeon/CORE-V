@@ -13,6 +13,9 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const data = await loginService(email, password)
+    if (data.user?.is_active === 0) {
+      throw new Error('INACTIVE_ACCOUNT')
+    }
     localStorage.setItem('token', data.token)
     localStorage.setItem('user', JSON.stringify(data.user))
     setUser(data.user)

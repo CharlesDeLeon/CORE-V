@@ -1,25 +1,44 @@
-import { useState } from 'react'
-import useAuth from '../context/useAuth'
+  import { useState } from 'react'
+  import useAuth from '../context/useAuth'
 
-const Login = () => {
-  const { login } = useAuth()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const Login = () => {
+    const { login } = useAuth()
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
+    
 
-  const handleLogin = async (e) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      await login(email, password)
-    } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.')
-    } finally {
-      setLoading(false)
+    const handleLogin = async (e) => {
+  e.preventDefault();
+  setError('');
+  setLoading(true);
+
+  try {
+
+    const response = await login(email, password);
+    if (response?.user?.status === 'deactivated' || response?.user?.isActive === false) {
+      // If your useAuth saves a token automatically, you may need to call a logout/clear function here
+      throw new Error('DEACTIVATED_ACCOUNT');
     }
+
+    // Success! The app will likely redirect via the AuthContext logic.
+
+  } catch (err) {
+    // 3. ERROR CATEGORIZATION
+    if (err.message === 'DEACTIVATED_ACCOUNT') {
+      setError('This account has been deactivated. Please contact an administrator.');
+    } else if (err.response?.status === 403) {
+      setError('Access denied. Your account may be disabled.');
+    } else if (err.response?.status === 401) {
+      setError('Invalid email or password.');
+    } else {
+      setError(err.response?.data?.message || 'An unexpected error occurred.');
+    }
+  } finally {
+    setLoading(false);
   }
+};
 
   return (
     <div style={styles.page}>
