@@ -111,7 +111,7 @@ const StudentDashboard = () => {
             <div style={styles.activityDivider} />
             <p
               style={{ ...styles.dimText, textAlign: 'center', cursor: 'pointer' }}
-              onClick={() => navigate('/student/upload')}
+              onClick={() => navigate('/student/history')}
             >
               View Full History
             </p>
