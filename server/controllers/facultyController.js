@@ -5,7 +5,7 @@ const listFaculties = async (_req, res) => {
     const [rows] = await pool.query(
       `SELECT user_id, name
        FROM users
-       WHERE role = 'Faculty'
+       WHERE LOWER(role) = 'faculty'
        ORDER BY name ASC`
     )
     res.json(rows)
@@ -232,6 +232,91 @@ const getPanelAssignments = async (req, res) => {
   }
 }
 
+const getAssignmentDetail = async (req, res) => {
+  try {
+    const { group_id } = req.params
+    const facultyId = req.user.user_id
+
+    const [access] = await pool.query(
+      `SELECT pa.assignment_id
+       FROM panel_assignments pa
+       WHERE pa.group_id = ? AND pa.faculty_id = ?`,
+      [group_id, facultyId]
+    )
+
+    if (access.length === 0) {
+      return res.status(403).json({ message: 'Unauthorized access' })
+    }
+
+    const [submissionRows] = await pool.query(
+      `SELECT 
+        s.submission_id,
+        s.group_id,
+        s.title,
+        s.abstract,
+        s.keywords,
+        s.authors,
+        s.program,
+        s.school_year,
+        s.stage,
+        s.status,
+        s.created_at,
+        s.updated_at,
+        rg.group_name,
+        u.name as submitted_by_name,
+        COALESCE(r.status_assigned, 'pending') as review_status,
+        r.review_id,
+        dv.file_path,
+        dv.file_name,
+        dv.file_size,
+        dv.file_type,
+        dv.uploaded_at
+       FROM submissions s
+       JOIN research_groups rg ON s.group_id = rg.group_id
+       JOIN users u ON s.submitted_by = u.user_id
+       LEFT JOIN reviews r ON s.submission_id = r.submission_id AND r.reviewer_id = ?
+       LEFT JOIN document_versions dv ON dv.submission_id = s.submission_id
+         AND dv.version_number = (
+           SELECT MAX(version_number)
+           FROM document_versions
+           WHERE submission_id = s.submission_id
+         )
+       WHERE s.group_id = ?
+       ORDER BY s.updated_at DESC, s.submission_id DESC
+       LIMIT 1`,
+      [facultyId, group_id]
+    )
+
+    if (submissionRows.length === 0) {
+      return res.status(404).json({ message: 'No submission found for this group' })
+    }
+
+    const submission = submissionRows[0]
+
+    const [comments] = await pool.query(
+      `SELECT 
+        rc.comment_id,
+        rc.comment_text,
+        rc.created_at,
+        u.user_id,
+        u.name as author_name
+       FROM review_comments rc
+       JOIN users u ON rc.author_id = u.user_id
+       WHERE rc.submission_id = ?
+       ORDER BY rc.created_at DESC`,
+      [submission.submission_id]
+    )
+
+    res.json({
+      submission,
+      comments
+    })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: 'Failed to load assignment details' })
+  }
+}
+
 const getSubmissionComments = async (req, res) => {
   try {
     const { submission_id } = req.params
@@ -267,11 +352,22 @@ const getSubmissionComments = async (req, res) => {
         u.name as submitted_by_name,
         COALESCE(r.status_assigned, 'pending') as review_status,
         r.review_id,
+        dv.file_path,
+        dv.file_name,
+        dv.file_size,
+        dv.file_type,
+        dv.uploaded_at,
         COUNT(DISTINCT rc.comment_id) as comments_count
        FROM submissions s
        JOIN research_groups rg ON s.group_id = rg.group_id
        JOIN users u ON s.submitted_by = u.user_id
        LEFT JOIN reviews r ON s.submission_id = r.submission_id AND r.reviewer_id = ?
+       LEFT JOIN document_versions dv ON dv.submission_id = s.submission_id
+         AND dv.version_number = (
+           SELECT MAX(version_number)
+           FROM document_versions
+           WHERE submission_id = s.submission_id
+         )
        LEFT JOIN review_comments rc ON s.submission_id = rc.submission_id
        WHERE s.submission_id = ?
        GROUP BY s.submission_id`,
@@ -312,5 +408,6 @@ module.exports = {
   addFeedbackComment,
   submitReview,
   getPanelAssignments,
+  getAssignmentDetail,
   getSubmissionComments
 }

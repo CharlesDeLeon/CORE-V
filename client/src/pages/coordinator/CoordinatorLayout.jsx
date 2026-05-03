@@ -34,29 +34,29 @@ const CoordinatorLayout = () => {
           </div>
 
           <div
-            style={{ ...styles.navItem, ...(isActive('/coordinator/ManageGroups') ? styles.navItemActive : {}) }}
-            onClick={() => navigate('/coordinator/ManageGroups')}
+            style={{ ...styles.navItem, ...(isActive('/coordinator/managegroups') ? styles.navItemActive : {}) }}
+            onClick={() => navigate('/coordinator/managegroups')}
           >
             Manage Groups
           </div>
 
           <div
-            style={{ ...styles.navItem, ...(isActive('/coordinator/ManageSubmissions') ? styles.navItemActive : {}) }}
-            onClick={() => navigate('/coordinator/ManageSubmissions')}
+            style={{ ...styles.navItem, ...(isActive('/coordinator/managesubmissions') ? styles.navItemActive : {}) }}
+            onClick={() => navigate('/coordinator/managesubmissions')}
           >
             Manage Submissions
           </div>
 
           <div
-            style={{ ...styles.navItem, ...(isActive('/coordinator/FacultyAssignment') ? styles.navItemActive : {}) }}
-            onClick={() => navigate('/coordinator/FacultyAssignment')}
+            style={{ ...styles.navItem, ...(isActive('/coordinator/facultyassignment') ? styles.navItemActive : {}) }}
+            onClick={() => navigate('/coordinator/facultyassignment')}
           >
             Assign Faculties
           </div>
 
           <div
-            style={{ ...styles.navItem, ...(isActive('/coordinator/CoordinatorNotif') ? styles.navItemActive : {}) }}
-            onClick={() => navigate('/coordinator/CoordinatorNotif')}
+            style={{ ...styles.navItem, ...(isActive('/coordinator/coordinatornotif') ? styles.navItemActive : {}) }}
+            onClick={() => navigate('/coordinator/coordinatornotif')}
           >
             Notifications
           </div>

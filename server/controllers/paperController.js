@@ -1,11 +1,31 @@
 const pool = require('../config/db')
 
+const getMyGroups = async (req, res) => {
+  try {
+    const userId = req.user.user_id
+
+    const [rows] = await pool.query(
+      `SELECT DISTINCT rg.group_id, rg.group_name, rg.program, rg.school_year
+       FROM research_groups rg
+       LEFT JOIN group_members gm ON gm.group_id = rg.group_id
+       WHERE gm.user_id = ? OR rg.created_by = ?
+       ORDER BY rg.group_name ASC`,
+      [userId, userId]
+    )
+
+    res.json({ data: rows })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: 'Failed to load your groups' })
+  }
+}
+
 const uploadPaper = async (req, res) => {
-  const { title, authors, program, year, school_year, abstract, keywords } = req.body
+  const { title, authors, program, year, school_year, abstract, keywords, group_id } = req.body
   const userId = req.user.user_id
   const effectiveSchoolYear = school_year || (year ? `${year}-${Number(year) + 1}` : '')
 
-  if (!title || !authors || !program || !effectiveSchoolYear) {
+  if (!title || !authors || !program || !effectiveSchoolYear || !group_id) {
     return res.status(400).json({ message: 'All required fields are missing' })
   }
   if (!req.file) {
@@ -16,32 +36,20 @@ const uploadPaper = async (req, res) => {
   try {
     await connection.beginTransaction()
 
-    const [existingGroupRows] = await connection.query(
-      `SELECT rg.group_id
+    const [groupRows] = await connection.query(
+      `SELECT DISTINCT rg.group_id, rg.group_name
        FROM research_groups rg
-       LEFT JOIN group_members gm ON gm.group_id = rg.group_id AND gm.user_id = ?
-       WHERE rg.created_by = ? OR gm.user_id = ?
-       ORDER BY rg.group_id ASC
-       LIMIT 1`,
-      [userId, userId, userId]
+       LEFT JOIN group_members gm ON gm.group_id = rg.group_id
+       WHERE rg.group_id = ? AND (gm.user_id = ? OR rg.created_by = ?)`,
+      [group_id, userId, userId]
     )
 
-    let groupId
-    if (existingGroupRows.length > 0) {
-      groupId = existingGroupRows[0].group_id
-    } else {
-      const [groupResult] = await connection.query(
-        `INSERT INTO research_groups (group_name, program, school_year, created_by)
-         VALUES (?, ?, ?, ?)`,
-        [`${title} Group`, program, effectiveSchoolYear, userId]
-      )
-      groupId = groupResult.insertId
-
-      await connection.query(
-        'INSERT INTO group_members (group_id, user_id) VALUES (?, ?)',
-        [groupId, userId]
-      )
+    if (groupRows.length === 0) {
+      await connection.rollback()
+      return res.status(403).json({ message: 'You are not a member of the selected group' })
     }
+
+    const groupId = groupRows[0].group_id
 
     const [existingSubmissionRows] = await connection.query(
       `SELECT submission_id
@@ -312,4 +320,4 @@ const getPaperDetail = async (req, res) => {
   }
 }
 
-module.exports = { uploadPaper, uploadPaperVersion, getMyPapers, getPaperDetail }
+module.exports = { getMyGroups, uploadPaper, uploadPaperVersion, getMyPapers, getPaperDetail }

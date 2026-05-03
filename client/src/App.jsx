@@ -66,6 +66,7 @@ function App() {
             <Route index element={<Navigate to="/faculty/dashboard" replace />} />
             <Route path="dashboard" element={<FacultyDashboard />} />
             <Route path="assignments" element={<AssignmentsList />} />
+            <Route path="assignments/:group_id" element={<SubmissionDetail />} />
             <Route path="submission/:submission_id" element={<SubmissionDetail />} />
           </Route>
 

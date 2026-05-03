@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
@@ -57,6 +57,7 @@ export default function UploadForm() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
+    group_id: "",
     title: "",
     abstract: "",
     keywords: "",
@@ -65,12 +66,36 @@ export default function UploadForm() {
     school_year: "",
   });
 
+  const [groups, setGroups] = useState([]);
+  const [groupsLoading, setGroupsLoading] = useState(false);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [charCounts, setCharCounts] = useState({ abstract: 0, keywords: 0 });
 
   const schoolYears = generateSchoolYears();
+
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        setGroupsLoading(true);
+        const res = await api.get("/papers/my-groups");
+        const myGroups = res.data.data || [];
+        setGroups(myGroups);
+        setForm(prev => ({
+          ...prev,
+          group_id: prev.group_id || (myGroups[0]?.group_id ? String(myGroups[0].group_id) : ""),
+        }));
+      } catch (err) {
+        console.error(err);
+        alert(err.response?.data?.message || "Failed to load your groups.");
+      } finally {
+        setGroupsLoading(false);
+      }
+    };
+
+    fetchGroups();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -105,11 +130,13 @@ export default function UploadForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file) { alert("Please attach a research file before submitting."); return; }
+    if (!form.group_id) { alert("Please select your group before submitting."); return; }
 
     try {
       setLoading(true);
 
       const formData = new FormData();
+      formData.append("group_id", form.group_id);
       formData.append("title",       form.title);
       formData.append("abstract",    form.abstract);
       formData.append("keywords",    form.keywords);
@@ -122,7 +149,15 @@ export default function UploadForm() {
 
       alert(`Submitted successfully! Paper ID: ${res.data.paperId} · Version: ${res.data.version}`);
 
-      setForm({ title: "", abstract: "", keywords: "", authors: "", program: "", school_year: "" });
+      setForm({
+        group_id: groups[0]?.group_id ? String(groups[0].group_id) : "",
+        title: "",
+        abstract: "",
+        keywords: "",
+        authors: "",
+        program: "",
+        school_year: "",
+      });
       setFile(null);
       setCharCounts({ abstract: 0, keywords: 0 });
     } catch (err) {
@@ -151,6 +186,29 @@ export default function UploadForm() {
         <form onSubmit={handleSubmit}>
 
           <div style={styles.formGrid}>
+            <div style={styles.fieldGroup}>
+              <FieldLabel>YOUR GROUP</FieldLabel>
+              <SelectField
+                name="group_id"
+                value={form.group_id}
+                onChange={handleChange}
+                disabled={groupsLoading || groups.length === 0}
+              >
+                <option value="" disabled>
+                  {groupsLoading ? "Loading groups..." : "Select your group"}
+                </option>
+                {groups.map(group => (
+                  <option key={group.group_id} value={group.group_id}>
+                    {group.group_name}
+                  </option>
+                ))}
+              </SelectField>
+              <p style={styles.hint}>
+                {groups.length > 0
+                  ? "Choose the research group this upload belongs to."
+                  : "You are not currently assigned to a group."}
+              </p>
+            </div>
             <div style={styles.fieldGroup}>
               <FieldLabel>RESEARCH TITLE</FieldLabel>
               <TextInput name="title" placeholder="e.g., Impact of AI on Modern Education"
@@ -254,7 +312,7 @@ export default function UploadForm() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || groupsLoading || groups.length === 0}
             style={{ ...styles.submitBtn, ...(loading ? styles.submitBtnDisabled : {}) }}
           >
             {loading ? "Uploading..." : "Submit Research"}

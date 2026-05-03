@@ -29,10 +29,11 @@ const FacultyAssignment = () => {
 
   const fetchFaculty = useCallback(async () => {
     try {
-      const res = await api.get('/coordinator/faculty')
+      const res = await api.get('/coordinator/groups/faculty')
       setFacultyList(res.data.data || [])
     } catch (e) {
       console.error(e)
+      setError('Failed to load faculty list')
     }
   }, [])
 

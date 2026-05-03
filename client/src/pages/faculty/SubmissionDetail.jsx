@@ -5,7 +5,7 @@ import useAuth from '../../context/useAuth'
 import api from '../../services/api'
 
 const SubmissionDetail = () => {
-  const { submission_id } = useParams()
+  const { submission_id, group_id } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -26,9 +26,11 @@ const SubmissionDetail = () => {
   useEffect(() => {
     const fetchDetail = async () => {
       try {
-        // Fetches submission info + comments in one call
-        // Adjust field names below to match your actual API response
-        const res = await api.get(`/faculty/submissions/${submission_id}/comments`)
+        const endpoint = group_id
+          ? `/faculty/assignments/${group_id}`
+          : `/faculty/submissions/${submission_id}/comments`
+
+        const res = await api.get(endpoint)
         setSubmission(res.data.submission)
         setComments(res.data.comments ?? [])
         setReviewStatus(res.data.submission?.review_status ?? null)
@@ -40,7 +42,7 @@ const SubmissionDetail = () => {
       }
     }
     fetchDetail()
-  }, [submission_id])
+  }, [submission_id, group_id])
 
   // Scroll to comments section if URL has #comments
   useEffect(() => {
@@ -87,9 +89,12 @@ const SubmissionDetail = () => {
 
   const handleAddComment = async () => {
     if (!commentText.trim()) return
+    const targetSubmissionId = submission?.submission_id || submission_id
+    if (!targetSubmissionId) return
+
     setSubmittingComment(true)
     try {
-      const res = await api.post(`/faculty/submissions/${submission_id}/comment`, {
+      const res = await api.post(`/faculty/submissions/${targetSubmissionId}/comment`, {
         comment_text: commentText.trim(),
       })
       // Append new comment to list
@@ -110,9 +115,12 @@ const SubmissionDetail = () => {
   }
 
   const handleReview = async (statusAssigned) => {
+    const targetSubmissionId = submission?.submission_id || submission_id
+    if (!targetSubmissionId) return
+
     setSubmittingReview(true)
     try {
-      await api.post(`/faculty/submissions/${submission_id}/review`, {
+      await api.post(`/faculty/submissions/${targetSubmissionId}/review`, {
         status_assigned: statusAssigned,
       })
       setReviewStatus(statusAssigned)
