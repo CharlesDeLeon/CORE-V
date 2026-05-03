@@ -1,4 +1,4 @@
-SET FOREIGN_KEY_CHECKS = 0;
+`SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS audit_logs;
 DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS review_comments;
@@ -157,4 +157,4 @@ CREATE INDEX idx_comments_submission     ON review_comments(submission_id);
 CREATE INDEX idx_notifications_user      ON notifications(user_id, is_read);
 CREATE INDEX idx_audit_user              ON audit_logs(user_id);
 CREATE INDEX idx_audit_target            ON audit_logs(target_type, target_id);
-ALTER TABLE submissions ADD FULLTEXT INDEX ft_search (title, keywords, authors);
+ALTER TABLE submissions ADD FULLTEXT INDEX ft_search (title, keywords, authors);`

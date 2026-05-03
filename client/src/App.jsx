@@ -18,6 +18,12 @@ import AssignmentsList from './pages/faculty/AssignmentsList'
 import SubmissionDetail from './pages/faculty/SubmissionDetail'
 
 // Coordinator
+import CoordinatorLayout from './pages/coordinator/CoordinatorLayout'
+import CoordinatorDashboard from './pages/coordinator/CoordinatorDashboard'
+import CoordinatorNotif from './pages/coordinator/CoordinatorNotif'
+import FacultyAssignment from './pages/coordinator/FacultyAssignment'
+import ManageGroups from './pages/coordinator/ManageGroups'
+import ManageSubmissions from './pages/coordinator/ManageSubmissions'
 
 // Admin
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -64,9 +70,25 @@ function App() {
           </Route>
 
           <Route
+            path="/coordinator"
+            element={
+              <ProtectedRoute allowedRole="coordinator">
+                <CoordinatorLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/coordinator/dashboard" replace />} />
+            <Route path="dashboard" element={<CoordinatorDashboard />} />
+            <Route path="coordinatornotif" element={<CoordinatorNotif />} />
+            <Route path="facultyassignment" element={<FacultyAssignment />} />
+            <Route path="managegroups" element={<ManageGroups />} />
+            <Route path="managesubmissions" element={<ManageSubmissions />} />
+          </Route>
+
+          <Route
             path="/admin"
             element={
-              <ProtectedRoute allowedRole={['sysadmin', 'coordinator', 'admin']}>
+              <ProtectedRoute allowedRole={['sysadmin', 'admin']}>
                 <AdminLayout />
               </ProtectedRoute>
             }

@@ -19,6 +19,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 // Audit middleware to expose req.audit and correlation/request ids
 app.use(require('./middleware/auditMiddleware'))
 
+app.use('/api/coordinator/groups',      require('./routes/coordinator.routes'))
+app.use('/api/coordinator/submissions', require('./routes/coordinatorSubmission.routes'))
+app.use('/api/coordinator/panel',       require('./routes/coordinatorSubmission.routes'))
+
 app.use('/api/auth', require('./routes/auth.routes'))
 app.use('/api/faculty', require('./routes/faculty.routes'))
 app.use('/api/papers', require('./routes/paper.routes'))
