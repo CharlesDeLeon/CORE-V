@@ -183,7 +183,7 @@ const SubmissionDetail = () => {
   }
 
   const currentReview = reviewStatus?.toLowerCase()
-  const fileUrl = submission.file_path ? getFileDownloadUrl(submission.file_path) : null
+  const fileUrl = submission.file_path ? `http://localhost:5000/${submission.file_path}` : null
   const fileType = getFileType(submission.file_name)
 
   return (
@@ -206,136 +206,61 @@ const SubmissionDetail = () => {
 
       <div style={styles.contentRow}>
 
-        {/* TOP ROW: meta + status/review side by side */}
-        <div style={styles.topRow}>
+        {/* ── LEFT COLUMN ─────────────────────────────────────────── */}
+        <div style={styles.leftColumn}>
 
-          {/* LEFT: submission info, abstract, keywords */}
-          <div style={styles.leftColumn}>
-            {/* Section 1: Submission Info */}
+          {/* Section 1: Submission Info */}
+          <div style={styles.section}>
+            <h1 style={styles.title}>{submission.title}</h1>
+            <div style={styles.metaGrid}>
+              <div>
+                <p style={styles.metaLabel}>GROUP</p>
+                <p style={styles.metaValue}>{submission.group_name ?? '—'}</p>
+              </div>
+              <div>
+                <p style={styles.metaLabel}>AUTHORS</p>
+                <p style={styles.metaValue}>{submission.authors ?? '—'}</p>
+              </div>
+              <div>
+                <p style={styles.metaLabel}>PROGRAM</p>
+                <p style={styles.metaValue}>{submission.program ?? '—'}</p>
+              </div>
+              <div>
+                <p style={styles.metaLabel}>SCHOOL YEAR</p>
+                <p style={styles.metaValue}>{submission.school_year ?? '—'}</p>
+              </div>
+              <div>
+                <p style={styles.metaLabel}>STAGE</p>
+                <p style={styles.metaValue}>{submission.stage ?? '—'}</p>
+              </div>
+              <div>
+                <p style={styles.metaLabel}>SUBMITTED</p>
+                <p style={styles.metaValue}>{formatDate(submission.submitted_at)}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Abstract */}
+          {submission.abstract && (
             <div style={styles.section}>
-              <h1 style={styles.title}>{submission.title}</h1>
-              <div style={styles.metaGrid}>
-                <div>
-                  <p style={styles.metaLabel}>GROUP</p>
-                  <p style={styles.metaValue}>{submission.group_name ?? '—'}</p>
-                </div>
-                <div>
-                  <p style={styles.metaLabel}>AUTHORS</p>
-                  <p style={styles.metaValue}>{submission.authors ?? '—'}</p>
-                </div>
-                <div>
-                  <p style={styles.metaLabel}>PROGRAM</p>
-                  <p style={styles.metaValue}>{submission.program ?? '—'}</p>
-                </div>
-                <div>
-                  <p style={styles.metaLabel}>SCHOOL YEAR</p>
-                  <p style={styles.metaValue}>{submission.school_year ?? '—'}</p>
-                </div>
-                <div>
-                  <p style={styles.metaLabel}>STAGE</p>
-                  <p style={styles.metaValue}>{submission.stage ?? '—'}</p>
-                </div>
-                <div>
-                  <p style={styles.metaLabel}>SUBMITTED</p>
-                  <p style={styles.metaValue}>{formatDate(submission.submitted_at)}</p>
-                </div>
+              <h2 style={styles.sectionTitle}>ABSTRACT</h2>
+              <p style={styles.abstractText}>{submission.abstract}</p>
+            </div>
+          )}
+
+          {/* Keywords */}
+          {submission.keywords && (
+            <div style={styles.section}>
+              <h2 style={styles.sectionTitle}>KEYWORDS</h2>
+              <div style={styles.keywordsList}>
+                {submission.keywords.split(',').map((kw, i) => (
+                  <span key={i} style={styles.keywordTag}>{kw.trim()}</span>
+                ))}
               </div>
             </div>
+          )}
 
-            {/* Abstract */}
-            {submission.abstract && (
-              <div style={styles.section}>
-                <h2 style={styles.sectionTitle}>ABSTRACT</h2>
-                <p style={styles.abstractText}>{submission.abstract}</p>
-              </div>
-            )}
-
-            {/* Keywords */}
-            {submission.keywords && (
-              <div style={styles.section}>
-                <h2 style={styles.sectionTitle}>KEYWORDS</h2>
-                <div style={styles.keywordsList}>
-                  {submission.keywords.split(',').map((kw, i) => (
-                    <span key={i} style={styles.keywordTag}>{kw.trim()}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* RIGHT: status + review decision */}
-          <div style={styles.rightColumn}>
-
-            <div style={styles.statusPanel}>
-              <p style={styles.metaLabel}>CURRENT REVIEW STATUS</p>
-              <div style={styles.statusDisplay}>
-                <span style={{ ...styles.statusBig, ...statusColor(reviewStatus) }}>
-                  {reviewStatus
-                    ? reviewStatus.replace('_', ' ').toUpperCase()
-                    : 'PENDING'}
-                </span>
-              </div>
-              <p style={styles.statusDate}>
-                Last updated {timeAgo(submission.updated_at ?? submission.submitted_at)}
-              </p>
-            </div>
-
-            <div style={styles.approvalPanel}>
-              <h2 style={styles.sectionTitle}>REVIEW DECISION</h2>
-              <p style={styles.approvalHint}>
-                Select a decision for this submission. This cannot be undone.
-              </p>
-
-              {currentReview && (
-                <div style={{ ...styles.alreadyBadge, ...statusColor(currentReview) }}>
-                  ✓ Already submitted: {currentReview.replace('_', ' ').toUpperCase()}
-                </div>
-              )}
-
-              <div style={styles.reviewBtns}>
-                <button
-                  style={{
-                    ...styles.reviewBtn,
-                    ...styles.approveBtn,
-                    opacity: (submittingReview || currentReview === 'approved') ? 0.5 : 1,
-                  }}
-                  onClick={() => handleReview('approved')}
-                  disabled={submittingReview || currentReview === 'approved'}
-                >
-                  ✓ Approve
-                </button>
-
-                <button
-                  style={{
-                    ...styles.reviewBtn,
-                    ...styles.revisionBtn,
-                    opacity: (submittingReview || currentReview === 'for_revision') ? 0.5 : 1,
-                  }}
-                  onClick={() => handleReview('for_revision')}
-                  disabled={submittingReview || currentReview === 'for_revision'}
-                >
-                  ⚠ For Revision
-                </button>
-
-                <button
-                  style={{
-                    ...styles.reviewBtn,
-                    ...styles.rejectBtn,
-                    opacity: (submittingReview || currentReview === 'rejected') ? 0.5 : 1,
-                  }}
-                  onClick={() => handleReview('rejected')}
-                  disabled={submittingReview || currentReview === 'rejected'}
-                >
-                  ✗ Reject
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {/* BOTTOM ROW: document viewer + comments side by side */}
-        <div style={styles.docCommentRow}>
+          {/* Document */}
           <div style={styles.section}>
             <h2 style={styles.sectionTitle}>DOCUMENT</h2>
             {submission.file_path ? (
@@ -422,6 +347,78 @@ const SubmissionDetail = () => {
               <p style={styles.dimText}>No document uploaded yet.</p>
             )}
           </div>
+
+        </div>
+
+        {/* ── RIGHT COLUMN ────────────────────────────────────────── */}
+        <div style={styles.rightColumn}>
+
+          <div style={styles.statusPanel}>
+            <p style={styles.metaLabel}>CURRENT REVIEW STATUS</p>
+            <div style={styles.statusDisplay}>
+              <span style={{ ...styles.statusBig, ...statusColor(reviewStatus) }}>
+                {reviewStatus
+                  ? reviewStatus.replace('_', ' ').toUpperCase()
+                  : 'PENDING'}
+              </span>
+            </div>
+            <p style={styles.statusDate}>
+              Last updated {timeAgo(submission.updated_at ?? submission.submitted_at)}
+            </p>
+          </div>
+
+          <div style={styles.approvalPanel}>
+            <h2 style={styles.sectionTitle}>REVIEW DECISION</h2>
+            <p style={styles.approvalHint}>
+              Select a decision for this submission. This cannot be undone.
+            </p>
+
+            {currentReview && (
+              <div style={{ ...styles.alreadyBadge, ...statusColor(currentReview) }}>
+                ✓ Already submitted: {currentReview.replace('_', ' ').toUpperCase()}
+              </div>
+            )}
+
+            <div style={styles.reviewBtns}>
+              <button
+                style={{
+                  ...styles.reviewBtn,
+                  ...styles.approveBtn,
+                  opacity: (submittingReview || currentReview === 'approved') ? 0.5 : 1,
+                }}
+                onClick={() => handleReview('approved')}
+                disabled={submittingReview || currentReview === 'approved'}
+              >
+                ✓ Approve
+              </button>
+
+              <button
+                style={{
+                  ...styles.reviewBtn,
+                  ...styles.revisionBtn,
+                  opacity: (submittingReview || currentReview === 'for_revision') ? 0.5 : 1,
+                }}
+                onClick={() => handleReview('for_revision')}
+                disabled={submittingReview || currentReview === 'for_revision'}
+              >
+                ⚠ For Revision
+              </button>
+
+              <button
+                style={{
+                  ...styles.reviewBtn,
+                  ...styles.rejectBtn,
+                  opacity: (submittingReview || currentReview === 'rejected') ? 0.5 : 1,
+                }}
+                onClick={() => handleReview('rejected')}
+                disabled={submittingReview || currentReview === 'rejected'}
+              >
+                ✗ Reject
+              </button>
+            </div>
+          </div>
+
+          {/* Comments */}
           <div style={styles.section} id="comments">
             <h2 style={styles.sectionTitle}>COMMENTS & FEEDBACK</h2>
 
@@ -466,8 +463,8 @@ const SubmissionDetail = () => {
             </div>
             <p style={styles.hintText}>Ctrl + Enter to submit</p>
           </div>
-        </div>
 
+        </div>
       </div>
     </div>
   )
@@ -522,19 +519,6 @@ const styles = {
     gridTemplateColumns: '1fr 340px',
     gap: '2rem',
     alignItems: 'flex-start',
-  },
-  topRow: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 340px',
-    gap: '2rem',
-    alignItems: 'flex-start',
-  },
-  docCommentRow: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '1.5rem',
-    alignItems: 'flex-start',
-    marginTop: '1.5rem',
   },
   leftColumn: {
     display: 'flex',
