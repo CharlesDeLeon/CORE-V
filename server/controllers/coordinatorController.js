@@ -292,7 +292,7 @@ const getFacultyList = async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT user_id, name, email FROM users
-       WHERE LOWER(role) = 'faculty' AND is_active = 1
+       WHERE role = 'faculty' AND is_active = TRUE
        ORDER BY name ASC`
     )
     res.json({ data: rows })
