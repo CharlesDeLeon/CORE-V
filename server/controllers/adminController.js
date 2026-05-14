@@ -302,7 +302,8 @@ const createUser = async (req, res) => {
 
     const [result] = await pool.query(
       `INSERT INTO users (name, email, password, role, program, is_active)
-       VALUES (?, ?, ?, ?, ?, 1)`,
+       VALUES (?, ?, ?, ?, ?, 1)
+       RETURNING user_id`,
       [
         String(name).trim(),
         String(email).trim().toLowerCase(),

@@ -68,7 +68,8 @@ const uploadPaper = async (req, res) => {
       const [submissionResult] = await connection.query(
         `INSERT INTO submissions
           (group_id, title, abstract, keywords, authors, program, school_year, submitted_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         RETURNING submission_id`,
         [
           groupId,
           title,

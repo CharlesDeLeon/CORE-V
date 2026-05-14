@@ -96,7 +96,8 @@ const createGroup = async (req, res) => {
 
     const [result] = await db.query(
       `INSERT INTO research_groups (group_name, program, school_year, created_by)
-       VALUES (?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?)
+       RETURNING group_id`,
       [group_name, program || null, school_year || null, created_by]
     )
     res.status(201).json({ message: 'Group created', group_id: result.insertId })
@@ -455,12 +456,18 @@ const updateStage = async (req, res) => {
     )
     if (members.length > 0) {
       const notifValues = members.map(m => [
-        m.user_id, id, 'status_change',
+        m.user_id,
+        id,
+        'status_change',
         `Your paper "${submission.title}" has advanced to the ${stage.replace('_', ' ')} stage.`
       ])
+      const flatParams = notifValues.flat()
+      const placeholders = notifValues
+        .map((_, idx) => `($${idx * 4 + 1}, $${idx * 4 + 2}, $${idx * 4 + 3}, $${idx * 4 + 4})`)
+        .join(', ')
       await db.query(
-        `INSERT INTO notifications (user_id, submission_id, type, message) VALUES ?`,
-        [notifValues]
+        `INSERT INTO notifications (user_id, submission_id, type, message) VALUES ${placeholders}`,
+        flatParams
       )
     }
 
@@ -500,12 +507,18 @@ const updateStatus = async (req, res) => {
     )
     if (members.length > 0) {
       const notifValues = members.map(m => [
-        m.user_id, id, 'status_change',
+        m.user_id,
+        id,
+        'status_change',
         `Your paper "${submission.title}" status has been updated to: ${status.replace('_', ' ')}.`
       ])
+      const flatParams = notifValues.flat()
+      const placeholders = notifValues
+        .map((_, idx) => `($${idx * 4 + 1}, $${idx * 4 + 2}, $${idx * 4 + 3}, $${idx * 4 + 4})`)
+        .join(', ')
       await db.query(
-        `INSERT INTO notifications (user_id, submission_id, type, message) VALUES ?`,
-        [notifValues]
+        `INSERT INTO notifications (user_id, submission_id, type, message) VALUES ${placeholders}`,
+        flatParams
       )
     }
 

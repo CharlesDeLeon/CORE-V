@@ -82,7 +82,8 @@ const addFeedbackComment = async (req, res) => {
     
     const [result] = await pool.query(
       `INSERT INTO review_comments (submission_id, author_id, comment_text)
-       VALUES (?, ?, ?)`,
+       VALUES (?, ?, ?)
+       RETURNING comment_id`,
       [submission_id, author_id, comment_text]
     )
 
@@ -171,7 +172,8 @@ const submitReview = async (req, res) => {
       // Create new review
       const [result] = await pool.query(
         `INSERT INTO reviews (submission_id, reviewer_id, status_assigned)
-         VALUES (?, ?, ?)`,
+         VALUES (?, ?, ?)
+         RETURNING review_id`,
         [submission_id, reviewer_id, status_assigned]
       )
       reviewId = result.insertId
