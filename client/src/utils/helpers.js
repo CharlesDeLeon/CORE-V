@@ -16,5 +16,6 @@ export const getApiBaseUrl = () => {
  */
 export const getFileDownloadUrl = (filePath) => {
   if (!filePath) return null
-  return `${getApiBaseUrl()}/${filePath.replace(/^\//, '')}` // Remove leading slash from filePath if present
+  const base = getApiBaseUrl().replace(/\/api$/, '') // Remove /api suffix for file URLs
+  return `${base}/${filePath.replace(/^\//, '')}`
 }
