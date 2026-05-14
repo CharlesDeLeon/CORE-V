@@ -35,7 +35,7 @@ const getAssignedSubmissions = async (req, res) => {
         s.updated_at,
         rg.group_name,
         u.name as submitted_by_name,
-        COALESCE(r.status_assigned, 'pending') as review_status,
+        r.status_assigned as review_status,
         r.review_id,
         COUNT(DISTINCT rc.comment_id) as comment_count
        FROM submissions s
@@ -266,7 +266,7 @@ const getAssignmentDetail = async (req, res) => {
         s.updated_at,
         rg.group_name,
         u.name as submitted_by_name,
-        COALESCE(r.status_assigned, 'pending') as review_status,
+        r.status_assigned as review_status,
         r.review_id,
         dv.file_path,
         dv.file_name,
@@ -352,7 +352,7 @@ const getSubmissionComments = async (req, res) => {
         s.updated_at,
         rg.group_name,
         u.name as submitted_by_name,
-        COALESCE(r.status_assigned, 'pending') as review_status,
+        r.status_assigned as review_status,
         r.review_id,
         dv.file_path,
         dv.file_name,
