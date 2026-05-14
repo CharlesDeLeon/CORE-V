@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../../services/api'
+import useAuth from '../../context/useAuth'
 import StatusBadge from '../../components/StatusBadge'
 
 const ALLOWED_TYPES = [
@@ -12,6 +13,7 @@ const ALLOWED_TYPES = [
 const PaperDetail = () => {
   const { paperId } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [paper, setPaper] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -19,7 +21,7 @@ const PaperDetail = () => {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState(null)
 
-  const fetchPaper = async () => {
+  const fetchPaper = useCallback(async () => {
     setLoading(true)
     try {
       const res = await api.get(`/papers/${paperId}`)
@@ -30,11 +32,27 @@ const PaperDetail = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [paperId])
 
   useEffect(() => {
     fetchPaper()
-  }, [paperId])
+  }, [fetchPaper])
+
+  const normalizeStatus = (status) => {
+    if (!status) return null
+    return status === 'for_revision' ? 'needs_revision' : status
+  }
+
+  const getDisplayStatus = () => {
+    const latestReviewStatus = normalizeStatus(paper?.reviews?.[0]?.status_assigned)
+    const submissionStatus = normalizeStatus(paper?.status)
+
+    return latestReviewStatus || submissionStatus
+  }
+
+  const canUploadNewVersion = Boolean(
+    paper?.submitted_by && user?.user_id && Number(paper.submitted_by) === Number(user.user_id)
+  )
 
   const formatFileSize = (bytes) => {
     if (!bytes) return 'Unknown'
@@ -54,7 +72,11 @@ const PaperDetail = () => {
     if (!status) return { background: '#ffffff22', color: '#fff' }
     const normalizedStatus = status.toLowerCase()
     if (normalizedStatus === 'approved') return { background: '#22c55e22', color: '#22c55e' }
-    if (normalizedStatus === 'needs_revision' || normalizedStatus === 'under_review') {
+    if (
+      normalizedStatus === 'needs_revision' ||
+      normalizedStatus === 'for_revision' ||
+      normalizedStatus === 'under_review'
+    ) {
       return { background: '#f9731622', color: '#f97316' }
     }
     if (normalizedStatus === 'rejected') return { background: '#ef444422', color: '#ef4444' }
@@ -152,17 +174,19 @@ const PaperDetail = () => {
       <div style={styles.topBar}>
         <button style={styles.backBtn} onClick={() => navigate(-1)}>← Back</button>
         <div style={styles.topActions}>
-          <label style={styles.uploadBtnLabel}>
-            {uploading ? 'Uploading...' : 'Upload new version'}
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={handleUploadNewVersion}
-              style={styles.hiddenFileInput}
-              disabled={uploading}
-            />
-          </label>
-          <StatusBadge status={paper.status} />
+          {canUploadNewVersion && (
+            <label style={styles.uploadBtnLabel}>
+              {uploading ? 'Uploading...' : 'Upload new version'}
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={handleUploadNewVersion}
+                style={styles.hiddenFileInput}
+                disabled={uploading}
+              />
+            </label>
+          )}
+          <StatusBadge status={getDisplayStatus()} />
         </div>
       </div>
 
@@ -249,11 +273,11 @@ const PaperDetail = () => {
           <div style={styles.statusPanel}>
             <p style={styles.statusLabel}>SUBMISSION STATUS</p>
             <div style={styles.statusDisplay}>
-              <span style={{ ...styles.statusIcon, color: statusColor(paper.status).color }}>
-                {getStatusIcon(paper.status)}
+              <span style={{ ...styles.statusIcon, color: statusColor(getDisplayStatus()).color }}>
+                {getStatusIcon(getDisplayStatus())}
               </span>
-              <p style={{ ...styles.statusText, color: statusColor(paper.status).color }}>
-                {paper.status ? paper.status.replace('_', ' ').toUpperCase() : 'UNKNOWN'}
+              <p style={{ ...styles.statusText, color: statusColor(getDisplayStatus()).color }}>
+                {getDisplayStatus() ? getDisplayStatus().replace('_', ' ').toUpperCase() : 'UNKNOWN'}
               </p>
             </div>
             <p style={styles.statusDate}>Updated {timeAgo(paper.updated_at)}</p>

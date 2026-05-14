@@ -82,7 +82,7 @@ const FacultyAssignment = () => {
   return (
     <div style={styles.container}>
       <div style={styles.topBar}>
-        <h2 style={styles.heading}>Assign Faculties</h2>
+        <h2 style={styles.heading}>Assign Faculty</h2>
         <p style={styles.subheading}>Assign advisers and panelists to research groups</p>
       </div>
 

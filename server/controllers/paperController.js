@@ -217,6 +217,8 @@ const getMyPapers = async (req, res) => {
   try {
     const [rows] = await pool.query(
       `SELECT
+          rg.group_id,
+          rg.group_name,
           s.submission_id AS paper_id,
           s.title,
           s.authors,
@@ -226,19 +228,35 @@ const getMyPapers = async (req, res) => {
           dv.file_path,
           dv.version_number,
           dv.uploaded_at
-       FROM submissions s
-       LEFT JOIN document_versions dv ON dv.submission_id = s.submission_id
-       WHERE s.submitted_by = ?
-       AND (
-         dv.version_number IS NULL OR
-         dv.version_number = (
-           SELECT MAX(version_number)
-           FROM document_versions
-           WHERE submission_id = s.submission_id
-         )
+       FROM (
+         SELECT DISTINCT gm.group_id
+         FROM group_members gm
+         WHERE gm.user_id = ?
+         UNION
+         SELECT rg.group_id
+         FROM research_groups rg
+         WHERE rg.created_by = ?
+       ) my_groups
+       JOIN research_groups rg ON rg.group_id = my_groups.group_id
+       LEFT JOIN submissions s ON s.submission_id = (
+         SELECT ss.submission_id
+         FROM submissions ss
+         WHERE ss.group_id = rg.group_id
+         ORDER BY ss.updated_at DESC, ss.submission_id DESC
+         LIMIT 1
        )
-       ORDER BY s.created_at DESC`,
-      [req.user.user_id]
+       LEFT JOIN document_versions dv ON dv.submission_id = s.submission_id
+         AND (
+           dv.version_number IS NULL OR
+           dv.version_number = (
+             SELECT MAX(version_number)
+             FROM document_versions
+             WHERE submission_id = s.submission_id
+           )
+         )
+       WHERE s.submission_id IS NOT NULL
+       ORDER BY rg.group_name ASC`,
+      [req.user.user_id, req.user.user_id]
     )
     res.json(rows)
   } catch (err) {
@@ -253,11 +271,22 @@ const getPaperDetail = async (req, res) => {
 
   try {
     const [submissionRows] = await pool.query(
-      `SELECT s.submission_id, s.title, s.abstract, s.keywords, s.authors, 
+      `SELECT s.submission_id, s.group_id, rg.group_name, s.title, s.abstract, s.keywords, s.authors, 
               s.program, s.school_year, s.status, s.created_at, s.updated_at
        FROM submissions s
-       WHERE s.submission_id = ? AND s.submitted_by = ?`,
-      [paperId, userId]
+       JOIN research_groups rg ON rg.group_id = s.group_id
+       WHERE s.submission_id = ?
+         AND (
+           EXISTS (
+             SELECT 1
+             FROM group_members gm
+             WHERE gm.group_id = rg.group_id
+               AND gm.user_id = ?
+           )
+           OR s.submitted_by = ?
+           OR rg.created_by = ?
+         )`,
+      [paperId, userId, userId, userId]
     )
 
     if (submissionRows.length === 0) {
@@ -302,6 +331,9 @@ const getPaperDetail = async (req, res) => {
 
     res.json({
       submission_id: submission.submission_id,
+      group_id: submission.group_id,
+      group_name: submission.group_name,
+      submitted_by: submission.submitted_by,
       title: submission.title,
       abstract: submission.abstract,
       keywords: submission.keywords,

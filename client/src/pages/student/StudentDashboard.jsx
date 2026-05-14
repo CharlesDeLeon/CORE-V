@@ -12,10 +12,10 @@ const StudentDashboard = () => {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-  if (user?.role === 'faculty') {
-    navigate('/faculty/dashboard')
-  }
-}, [user, navigate])
+    if (user?.role === 'faculty') {
+      navigate('/faculty/dashboard')
+    }
+  }, [user, navigate])
 
   useEffect(() => {
     api.get('/papers/my')
@@ -23,6 +23,11 @@ const StudentDashboard = () => {
       .catch(() => setError('Failed to load papers.'))
       .finally(() => setLoading(false))
   }, [])
+
+  const normalizeStatus = (status) => {
+    if (!status) return ''
+    return status === 'for_revision' ? 'needs_revision' : status
+  }
 
   const timeAgo = (dateStr) => {
     // eslint-disable-next-line react-hooks/purity
@@ -33,8 +38,12 @@ const StudentDashboard = () => {
   }
 
   const statusColor = (status) => {
-    if (status === 'Approved') return { background: '#22c55e22', color: '#22c55e' }
-    if (status === 'Needs Revision') return { background: '#f9731622', color: '#f97316' }
+    const normalized = normalizeStatus(status).toLowerCase()
+    if (normalized === 'approved') return { background: '#22c55e22', color: '#22c55e' }
+    if (normalized === 'needs_revision' || normalized === 'under_review') {
+      return { background: '#f9731622', color: '#f97316' }
+    }
+    if (normalized === 'rejected') return { background: '#ef444422', color: '#ef4444' }
     return { background: '#ffffff22', color: '#fff' }
   }
 
@@ -60,26 +69,30 @@ const StudentDashboard = () => {
 
           {!loading && !error && (
             <div style={styles.grid}>
-              {papers.map(paper => (
-                <div
-                  key={paper.paper_id}
-                  style={styles.card}
-                  onClick={() => navigate(`/student/paper/${paper.paper_id}`)}
-                >
-                  <div style={styles.cardTop}>
-                    <span style={{ ...styles.statusBadge, ...statusColor(paper.status) }}>
-                      {paper.status}
-                    </span>
-                    <span style={styles.updatedText}>{timeAgo(paper.created_at)}</span>
+              {papers.map(paper => {
+                const displayStatus = normalizeStatus(paper.status).replace('_', ' ').toUpperCase() || 'UNKNOWN'
+                return (
+                  <div
+                    key={paper.paper_id}
+                    style={styles.card}
+                    onClick={() => navigate(`/student/paper/${paper.paper_id}`)}
+                  >
+                    <div style={styles.cardTop}>
+                      <span style={{ ...styles.statusBadge, ...statusColor(paper.status) }}>
+                        {displayStatus}
+                      </span>
+                      <span style={styles.updatedText}>{timeAgo(paper.created_at)}</span>
+                    </div>
+                    {paper.group_name && <p style={styles.groupName}>{paper.group_name}</p>}
+                    <h3 style={styles.cardTitle}>{paper.title}</h3>
+                    <p style={styles.cardDesc}>{paper.authors}</p>
+                    <div style={styles.cardDivider} />
+                    <div style={styles.cardBottom}>
+                      <span style={styles.reviewText}>Program: {paper.program}</span>
+                    </div>
                   </div>
-                  <h3 style={styles.cardTitle}>{paper.title}</h3>
-                  <p style={styles.cardDesc}>{paper.authors}</p>
-                  <div style={styles.cardDivider} />
-                  <div style={styles.cardBottom}>
-                    <span style={styles.reviewText}>Program: {paper.program}</span>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
 
               <div style={styles.draftCard} onClick={() => navigate('/student/upload')}>
                 <span style={styles.draftText}>+ Start New Draft</span>
@@ -96,17 +109,20 @@ const StudentDashboard = () => {
                 No activity yet.
               </p>
             ) : (
-              papers.slice(0, 3).map(paper => (
-                <div key={paper.paper_id} style={styles.activityItem}>
-                  <div style={{ ...styles.activityDot, background: statusColor(paper.status).color }} />
-                  <div>
-                    <p style={styles.activityText}>
-                      <strong>{paper.title}</strong> — {paper.status}
-                    </p>
-                    <p style={styles.activityTime}>{timeAgo(paper.created_at)}</p>
+              papers.slice(0, 3).map(paper => {
+                const displayStatus = normalizeStatus(paper.status).replace('_', ' ').toUpperCase() || 'UNKNOWN'
+                return (
+                  <div key={paper.paper_id} style={styles.activityItem}>
+                    <div style={{ ...styles.activityDot, background: statusColor(paper.status).color }} />
+                    <div>
+                      <p style={styles.activityText}>
+                        <strong>{paper.title}</strong> - {displayStatus}
+                      </p>
+                      <p style={styles.activityTime}>{timeAgo(paper.created_at)}</p>
+                    </div>
                   </div>
-                </div>
-              ))
+                )
+              })
             )}
             <div style={styles.activityDivider} />
             <p
@@ -194,6 +210,14 @@ const styles = {
   updatedText: {
     fontSize: '12px',
     color: 'rgba(255,255,255,0.4)',
+  },
+  groupName: {
+    fontSize: '11px',
+    fontWeight: '700',
+    color: '#FFBE4F',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    margin: '0 0 0.35rem 0',
   },
   cardTitle: {
     fontSize: '16px',

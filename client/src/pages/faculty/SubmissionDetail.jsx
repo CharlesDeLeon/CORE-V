@@ -20,7 +20,10 @@ const SubmissionDetail = () => {
   const [reviewStatus, setReviewStatus] = useState(null)
   const [submittingReview, setSubmittingReview] = useState(false)
 
-  const [toast, setToast] = useState(null) // { message, type: 'success' | 'error' }
+  const [toast, setToast] = useState(null)
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewError, setPreviewError] = useState(false)
+
   const commentsEndRef = useRef(null)
 
   useEffect(() => {
@@ -44,12 +47,12 @@ const SubmissionDetail = () => {
     fetchDetail()
   }, [submission_id, group_id])
 
-  // Scroll to comments section if URL has #comments
   useEffect(() => {
     if (window.location.hash === '#comments' && commentsEndRef.current) {
       commentsEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }, [comments])
+
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
@@ -87,6 +90,19 @@ const SubmissionDetail = () => {
     link.click()
   }
 
+  const getFileType = (fileName) => {
+    if (!fileName) return 'unknown'
+    const ext = fileName.split('.').pop().toLowerCase()
+    if (ext === 'pdf') return 'pdf'
+    if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext)) return 'image'
+    return 'other'
+  }
+
+  const handlePreviewToggle = () => {
+    setPreviewError(false)
+    setPreviewOpen(prev => !prev)
+  }
+
   const handleAddComment = async () => {
     if (!commentText.trim()) return
     const targetSubmissionId = submission?.submission_id || submission_id
@@ -97,7 +113,6 @@ const SubmissionDetail = () => {
       const res = await api.post(`/faculty/submissions/${targetSubmissionId}/comment`, {
         comment_text: commentText.trim(),
       })
-      // Append new comment to list
       setComments(prev => [...prev, res.data.comment ?? {
         comment_id: Date.now(),
         author_name: user?.name,
@@ -167,6 +182,8 @@ const SubmissionDetail = () => {
   }
 
   const currentReview = reviewStatus?.toLowerCase()
+  const fileUrl = submission.file_path ? `http://localhost:5000/${submission.file_path}` : null
+  const fileType = getFileType(submission.file_name)
 
   return (
     <div style={styles.container}>
@@ -242,35 +259,168 @@ const SubmissionDetail = () => {
             </div>
           )}
 
-          {/* Download */}
+          {/* Document */}
           <div style={styles.section}>
             <h2 style={styles.sectionTitle}>DOCUMENT</h2>
             {submission.file_path ? (
-              <div style={styles.fileRow}>
-                <div>
-                  <p style={styles.fileName}>{submission.file_name ?? 'research-paper.pdf'}</p>
-                  <p style={styles.fileMeta}>
-                    {/* Adjust version info fields to match your API */}
-                    Latest version · {timeAgo(submission.submitted_at)}
-                  </p>
+              <>
+                <div style={styles.fileRow}>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={styles.fileName}>{submission.file_name ?? 'research-paper.pdf'}</p>
+                    <p style={styles.fileMeta}>
+                      Latest version · {timeAgo(submission.submitted_at)}
+                    </p>
+                  </div>
+                  <div style={styles.fileActions}>
+                    <button
+                      style={{
+                        ...styles.previewBtn,
+                        ...(previewOpen ? styles.previewBtnActive : {}),
+                      }}
+                      onClick={handlePreviewToggle}
+                      title={previewOpen ? 'Close preview' : 'Quick preview'}
+                      aria-label="Toggle file preview"
+                    >
+                      {previewOpen ? (
+                        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M1 1L14 14M14 1L1 14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                        </svg>
+                      ) : (
+                        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.7"/>
+                          <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+                        </svg>
+                      )}
+                    </button>
+                    <button
+                      style={styles.downloadBtn}
+                      onClick={() => downloadFile(submission.file_path, submission.file_name ?? 'paper.pdf')}
+                    >
+                      ↓ Download
+                    </button>
+                  </div>
                 </div>
-                <button
-                  style={styles.downloadBtn}
-                  onClick={() => downloadFile(submission.file_path, submission.file_name ?? 'paper.pdf')}
-                >
-                  ↓ Download
-                </button>
-              </div>
+
+                {/* Inline Preview Panel */}
+                {previewOpen && (
+                  <div style={styles.previewPanel}>
+                    <div style={styles.previewHeader}>
+                      <span style={styles.previewHeaderLabel}>
+                        <svg width="13" height="13" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '6px', flexShrink: 0 }}>
+                          <path d="M3 1.5A1.5 1.5 0 0 1 4.5 0h5.379a1.5 1.5 0 0 1 1.06.44l2.122 2.12A1.5 1.5 0 0 1 13.5 3.622V13.5A1.5 1.5 0 0 1 12 15H4.5A1.5 1.5 0 0 1 3 13.5v-12Z" stroke="currentColor" strokeWidth="1.4" fill="none"/>
+                          <path d="M9 0v3.5a.5.5 0 0 0 .5.5H13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                        </svg>
+                        {submission.file_name ?? 'Document'}
+                      </span>
+                      <button
+                        style={styles.previewCloseBtn}
+                        onClick={() => setPreviewOpen(false)}
+                        aria-label="Close preview"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div style={styles.previewBody}>
+                      {previewError ? (
+                        <div style={styles.previewFallback}>
+                          <p style={styles.previewFallbackTitle}>Preview unavailable</p>
+                          <p style={styles.previewFallbackSub}>This file type can't be previewed. Download it to view.</p>
+                          <button style={styles.downloadBtn} onClick={() => downloadFile(submission.file_path, submission.file_name ?? 'paper.pdf')}>↓ Download to view</button>
+                        </div>
+                      ) : fileType === 'pdf' ? (
+                        <iframe src={`${fileUrl}#toolbar=1&navpanes=0&scrollbar=1`} style={styles.previewIframe} title="Document preview" onError={() => setPreviewError(true)} />
+                      ) : fileType === 'image' ? (
+                        <img src={fileUrl} alt="Document preview" style={styles.previewImage} onError={() => setPreviewError(true)} />
+                      ) : (
+                        <div style={styles.previewFallback}>
+                          <p style={styles.previewFallbackTitle}>No preview available</p>
+                          <p style={styles.previewFallbackSub}>Only PDF and image files can be previewed.</p>
+                          <button style={styles.downloadBtn} onClick={() => downloadFile(submission.file_path, submission.file_name ?? 'paper.pdf')}>↓ Download to view</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <p style={styles.dimText}>No document uploaded yet.</p>
             )}
           </div>
 
-          {/* Section 2: Comments */}
+        </div>
+
+        {/* ── RIGHT COLUMN ────────────────────────────────────────── */}
+        <div style={styles.rightColumn}>
+
+          <div style={styles.statusPanel}>
+            <p style={styles.metaLabel}>CURRENT REVIEW STATUS</p>
+            <div style={styles.statusDisplay}>
+              <span style={{ ...styles.statusBig, ...statusColor(reviewStatus) }}>
+                {reviewStatus
+                  ? reviewStatus.replace('_', ' ').toUpperCase()
+                  : 'PENDING'}
+              </span>
+            </div>
+            <p style={styles.statusDate}>
+              Last updated {timeAgo(submission.updated_at ?? submission.submitted_at)}
+            </p>
+          </div>
+
+          <div style={styles.approvalPanel}>
+            <h2 style={styles.sectionTitle}>REVIEW DECISION</h2>
+            <p style={styles.approvalHint}>
+              Select a decision for this submission. This cannot be undone.
+            </p>
+
+            {currentReview && (
+              <div style={{ ...styles.alreadyBadge, ...statusColor(currentReview) }}>
+                ✓ Already submitted: {currentReview.replace('_', ' ').toUpperCase()}
+              </div>
+            )}
+
+            <div style={styles.reviewBtns}>
+              <button
+                style={{
+                  ...styles.reviewBtn,
+                  ...styles.approveBtn,
+                  opacity: (submittingReview || currentReview === 'approved') ? 0.5 : 1,
+                }}
+                onClick={() => handleReview('approved')}
+                disabled={submittingReview || currentReview === 'approved'}
+              >
+                ✓ Approve
+              </button>
+
+              <button
+                style={{
+                  ...styles.reviewBtn,
+                  ...styles.revisionBtn,
+                  opacity: (submittingReview || currentReview === 'for_revision') ? 0.5 : 1,
+                }}
+                onClick={() => handleReview('for_revision')}
+                disabled={submittingReview || currentReview === 'for_revision'}
+              >
+                ⚠ For Revision
+              </button>
+
+              <button
+                style={{
+                  ...styles.reviewBtn,
+                  ...styles.rejectBtn,
+                  opacity: (submittingReview || currentReview === 'rejected') ? 0.5 : 1,
+                }}
+                onClick={() => handleReview('rejected')}
+                disabled={submittingReview || currentReview === 'rejected'}
+              >
+                ✗ Reject
+              </button>
+            </div>
+          </div>
+
+          {/* Comments */}
           <div style={styles.section} id="comments">
             <h2 style={styles.sectionTitle}>COMMENTS & FEEDBACK</h2>
 
-            {/* Comment List */}
             <div style={styles.commentsList}>
               {comments.length === 0 ? (
                 <p style={styles.dimText}>No comments yet. Be the first to leave feedback.</p>
@@ -288,7 +438,6 @@ const SubmissionDetail = () => {
               <div ref={commentsEndRef} />
             </div>
 
-            {/* Add Comment */}
             <div style={styles.commentInputRow}>
               <textarea
                 style={styles.commentInput}
@@ -312,81 +461,6 @@ const SubmissionDetail = () => {
               </button>
             </div>
             <p style={styles.hintText}>Ctrl + Enter to submit</p>
-          </div>
-
-        </div>
-
-        {/* ── RIGHT COLUMN ────────────────────────────────────────── */}
-        <div style={styles.rightColumn}>
-
-          {/* Current Status */}
-          <div style={styles.statusPanel}>
-            <p style={styles.metaLabel}>CURRENT REVIEW STATUS</p>
-            <div style={styles.statusDisplay}>
-              <span style={{ ...styles.statusBig, ...statusColor(reviewStatus) }}>
-                {reviewStatus
-                  ? reviewStatus.replace('_', ' ').toUpperCase()
-                  : 'PENDING'}
-              </span>
-            </div>
-            <p style={styles.statusDate}>
-              Last updated {timeAgo(submission.updated_at ?? submission.submitted_at)}
-            </p>
-          </div>
-
-          {/* Section 3: Approval Panel */}
-          <div style={styles.approvalPanel}>
-            <h2 style={styles.sectionTitle}>REVIEW DECISION</h2>
-            <p style={styles.approvalHint}>
-              Select a decision for this submission. This cannot be undone.
-            </p>
-
-            {currentReview && (
-              <div style={{ ...styles.alreadyBadge, ...statusColor(currentReview) }}>
-                ✓ Already submitted: {currentReview.replace('_', ' ').toUpperCase()}
-              </div>
-            )}
-
-            <div style={styles.reviewBtns}>
-              {/* Approve */}
-              <button
-                style={{
-                  ...styles.reviewBtn,
-                  ...styles.approveBtn,
-                  opacity: (submittingReview || currentReview === 'approved') ? 0.5 : 1,
-                }}
-                onClick={() => handleReview('approved')}
-                disabled={submittingReview || currentReview === 'approved'}
-              >
-                ✓ Approve
-              </button>
-
-              {/* For Revision */}
-              <button
-                style={{
-                  ...styles.reviewBtn,
-                  ...styles.revisionBtn,
-                  opacity: (submittingReview || currentReview === 'for_revision') ? 0.5 : 1,
-                }}
-                onClick={() => handleReview('for_revision')}
-                disabled={submittingReview || currentReview === 'for_revision'}
-              >
-                ⚠ For Revision
-              </button>
-
-              {/* Reject */}
-              <button
-                style={{
-                  ...styles.reviewBtn,
-                  ...styles.rejectBtn,
-                  opacity: (submittingReview || currentReview === 'rejected') ? 0.5 : 1,
-                }}
-                onClick={() => handleReview('rejected')}
-                disabled={submittingReview || currentReview === 'rejected'}
-              >
-                ✗ Reject
-              </button>
-            </div>
           </div>
 
         </div>
@@ -534,6 +608,31 @@ const styles = {
     color: 'rgba(255,255,255,0.4)',
     margin: 0,
   },
+  fileActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    flexShrink: 0,
+  },
+  previewBtn: {
+    background: 'rgba(255,255,255,0.08)',
+    border: '1px solid rgba(255,255,255,0.15)',
+    borderRadius: '8px',
+    color: 'rgba(255,255,255,0.7)',
+    width: '34px',
+    height: '34px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    flexShrink: 0,
+    transition: 'background 0.15s, color 0.15s',
+  },
+  previewBtnActive: {
+    background: 'rgba(255,190,79,0.15)',
+    border: '1px solid rgba(255,190,79,0.4)',
+    color: '#FFBE4F',
+  },
   downloadBtn: {
     background: '#FFBE4F',
     color: '#1e2a6e',
@@ -546,6 +645,113 @@ const styles = {
     whiteSpace: 'nowrap',
     flexShrink: 0,
   },
+
+  // ── Document + Comments side-by-side ────────────────────────────────────
+  docCommentRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '1.5rem',
+    alignItems: 'flex-start',
+  },
+  docPane: {
+    background: '#ffffff0f',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '14px',
+    padding: '1.5rem',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+  },
+  commentsPane: {
+    background: '#ffffff0f',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '14px',
+    padding: '1.5rem',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+
+
+  previewPanel: {
+    marginTop: '12px',
+    background: '#0d1433',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: '12px',
+    overflow: 'hidden',
+  },
+  previewHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '10px 14px',
+    borderBottom: '1px solid rgba(255,255,255,0.08)',
+    background: 'rgba(255,255,255,0.04)',
+  },
+  previewHeaderLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    fontSize: '12px',
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.55)',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    gap: '4px',
+  },
+  previewCloseBtn: {
+    background: 'transparent',
+    border: 'none',
+    color: 'rgba(255,255,255,0.35)',
+    fontSize: '13px',
+    cursor: 'pointer',
+    padding: '2px 6px',
+    borderRadius: '4px',
+    flexShrink: 0,
+  },
+  previewBody: {
+    width: '100%',
+    height: '520px',
+    overflow: 'hidden',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewIframe: {
+    width: '100%',
+    height: '100%',
+    border: 'none',
+    display: 'block',
+    background: '#fff',
+  },
+  previewImage: {
+    maxWidth: '100%',
+    maxHeight: '100%',
+    objectFit: 'contain',
+    display: 'block',
+  },
+  previewFallback: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '10px',
+    padding: '2rem',
+    textAlign: 'center',
+  },
+  previewFallbackTitle: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.7)',
+    margin: 0,
+  },
+  previewFallbackSub: {
+    fontSize: '12px',
+    color: 'rgba(255,255,255,0.35)',
+    margin: '0 0 8px 0',
+    lineHeight: 1.6,
+  },
+
+  // ── Comments ─────────────────────────────────────────────────────────────
   commentsList: {
     display: 'flex',
     flexDirection: 'column',

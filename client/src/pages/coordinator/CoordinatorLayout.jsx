@@ -51,7 +51,7 @@ const CoordinatorLayout = () => {
             style={{ ...styles.navItem, ...(isActive('/coordinator/facultyassignment') ? styles.navItemActive : {}) }}
             onClick={() => navigate('/coordinator/facultyassignment')}
           >
-            Assign Faculties
+            Assign Faculty
           </div>
 
           <div
