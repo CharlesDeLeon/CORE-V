@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import useAuth from '../../context/useAuth'
 import api from '../../services/api'
+import { getFileDownloadUrl } from '../../utils/helpers'
 
 const SubmissionDetail = () => {
   const { submission_id, group_id } = useParams()
@@ -85,7 +86,7 @@ const SubmissionDetail = () => {
 
   const downloadFile = (filePath, fileName) => {
     const link = document.createElement('a')
-    link.href = `http://localhost:5000/${filePath}`
+    link.href = getFileDownloadUrl(filePath)
     link.download = fileName
     link.click()
   }
@@ -182,7 +183,7 @@ const SubmissionDetail = () => {
   }
 
   const currentReview = reviewStatus?.toLowerCase()
-  const fileUrl = submission.file_path ? `http://localhost:5000/${submission.file_path}` : null
+  const fileUrl = submission.file_path ? getFileDownloadUrl(submission.file_path) : null
   const fileType = getFileType(submission.file_name)
 
   return (

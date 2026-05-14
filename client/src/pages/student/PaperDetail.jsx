@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import useAuth from '../../context/useAuth'
 import StatusBadge from '../../components/StatusBadge'
+import { getFileDownloadUrl } from '../../utils/helpers'
 
 const ALLOWED_TYPES = [
   'application/pdf',
@@ -93,9 +94,8 @@ const PaperDetail = () => {
   }
 
   const downloadFile = (filePath, fileName) => {
-    const fileNameOnly = filePath?.split('\\').pop()?.split('/').pop() || filePath
     const link = document.createElement('a')
-    link.href = `http://localhost:5000/uploads/${encodeURIComponent(fileNameOnly)}`
+    link.href = getFileDownloadUrl(filePath)
     link.download = fileName
     link.click()
   }

@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useCallback } from 'react'
 import api from '../../services/api'
+import { getFileDownloadUrl } from '../../utils/helpers'
 
 const STAGE_ORDER  = ['proposal', 'defense', 'final_submission']
 const STAGE_LABELS = { proposal: 'Proposal', defense: 'Defense', final_submission: 'Final Submission' }
@@ -259,7 +260,7 @@ const ManageSubmissions = () => {
                   <div style={styles.versionLabel}>v{v.version_number} — {v.file_name}</div>
                   <div style={styles.versionMeta}>Uploaded by {v.uploaded_by_name} · {new Date(v.uploaded_at).toLocaleDateString()}</div>
                 </div>
-                <a href={`http://localhost:5000/${v.file_path}`} target="_blank" rel="noreferrer" style={styles.downloadLink}>Download</a>
+                <a href={getFileDownloadUrl(v.file_path)} target="_blank" rel="noreferrer" style={styles.downloadLink}>Download</a>
               </div>
             ))}
 
